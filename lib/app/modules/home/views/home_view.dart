@@ -8,6 +8,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import '../controllers/home_controller.dart';
 import '../../library/views/library_view.dart';
 import '../../reader/views/reader_view.dart';
+import '../../ai/views/ai_view.dart';
 import '../../history/views/history_view.dart';
 import '../../settings/views/settings_view.dart';
 
@@ -22,6 +23,7 @@ class HomeView extends GetView<HomeController> {
         children: const [
           LibraryView(),
           ReaderView(),
+          AiView(),
           HistoryView(),
           SettingsView(),
         ],
@@ -56,8 +58,9 @@ class HomeView extends GetView<HomeController> {
             children: [
               _buildNavItem(0, Iconsax.book, 'Thư viện', true),
               _buildNavItem(1, Iconsax.book_1, 'Đọc', true),
-              _buildNavItem(2, Iconsax.clock, 'Lịch sử', true),
-              _buildNavItem(3, Iconsax.setting_2, 'Cài đặt', true),
+              _buildNavItem(2, Iconsax.cpu, 'AI', true),
+              _buildNavItem(3, Iconsax.clock, 'Lịch sử', true),
+              _buildNavItem(4, Iconsax.setting_2, 'Cài đặt', true),
             ],
           )),
         ),
@@ -99,6 +102,11 @@ class HomeView extends GetView<HomeController> {
               GButton(
                 icon: Iconsax.book_1,
                 text: 'Đọc truyện',
+                textStyle: TextStyle(fontSize: 12.sp),
+              ),
+              GButton(
+                icon: Iconsax.cpu,
+                text: 'AI',
                 textStyle: TextStyle(fontSize: 12.sp),
               ),
               GButton(

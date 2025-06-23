@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 import '../../library/controllers/library_controller.dart';
 import '../../reader/controllers/reader_controller.dart';
+import '../../ai/controllers/ai_controller.dart';
 import '../../history/controllers/history_controller.dart';
 import '../../settings/controllers/settings_controller.dart';
 
@@ -19,6 +20,10 @@ class HomeBinding extends Bindings {
 
     Get.lazyPut<ReaderController>(
       () => ReaderController(),
+    );
+
+    Get.lazyPut<AiController>(
+      () => AiController(),
     );
 
     Get.lazyPut<HistoryController>(

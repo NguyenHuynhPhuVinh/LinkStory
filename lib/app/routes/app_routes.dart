@@ -8,6 +8,7 @@ abstract class Routes {
   static const READER = _Paths.READER;
   static const HISTORY = _Paths.HISTORY;
   static const SETTINGS = _Paths.SETTINGS;
+  static const AI = _Paths.AI;
 }
 
 abstract class _Paths {
@@ -17,4 +18,5 @@ abstract class _Paths {
   static const READER = '/reader';
   static const HISTORY = '/history';
   static const SETTINGS = '/settings';
+  static const AI = '/ai';
 }

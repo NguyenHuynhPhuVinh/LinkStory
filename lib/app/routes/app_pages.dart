@@ -9,6 +9,8 @@ import '../modules/history/bindings/history_binding.dart';
 import '../modules/history/views/history_view.dart';
 import '../modules/settings/bindings/settings_binding.dart';
 import '../modules/settings/views/settings_view.dart';
+import '../modules/ai/bindings/ai_binding.dart';
+import '../modules/ai/views/ai_view.dart';
 
 part 'app_routes.dart';
 
@@ -42,6 +44,11 @@ class AppPages {
       name: _Paths.SETTINGS,
       page: () => const SettingsView(),
       binding: SettingsBinding(),
+    ),
+    GetPage(
+      name: _Paths.AI,
+      page: () => const AiView(),
+      binding: AiBinding(),
     ),
   ];
 }
