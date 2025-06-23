@@ -4,12 +4,18 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'app/routes/app_pages.dart';
+import 'app/data/models/website_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive
   await Hive.initFlutter();
+
+  // Register Hive adapters
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(WebsiteAdapter());
+  }
 
   runApp(const LinkStoryApp());
 }
