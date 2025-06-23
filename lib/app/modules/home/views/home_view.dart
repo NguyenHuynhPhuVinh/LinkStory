@@ -39,13 +39,16 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildMobileNavBar() {
+    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(Get.context!).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             blurRadius: 20.r,
-            color: Colors.black.withOpacity(0.1),
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           )
         ],
       ),
@@ -69,13 +72,16 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildTabletNavBar() {
+    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(Get.context!).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             blurRadius: 20.r,
-            color: Colors.black.withOpacity(0.1),
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           )
         ],
       ),
@@ -83,16 +89,18 @@ class HomeView extends GetView<HomeController> {
         child: Container(
           height: 70.h,
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          child: Obx(() => GNav(
-            rippleColor: Colors.grey[300]!,
-            hoverColor: Colors.grey[100]!,
-            gap: 8.w,
-            activeColor: Colors.black,
-            iconSize: 24.r,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: Colors.grey[100]!,
-            color: Colors.black,
+          child: Obx(() {
+            final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
+            return GNav(
+              rippleColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+              hoverColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+              gap: 8.w,
+              activeColor: Theme.of(Get.context!).colorScheme.primary,
+              iconSize: 24.r,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              duration: const Duration(milliseconds: 400),
+              tabBackgroundColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+              color: Theme.of(Get.context!).colorScheme.onSurface,
             tabs: [
               GButton(
                 icon: Iconsax.book,
@@ -120,11 +128,12 @@ class HomeView extends GetView<HomeController> {
                 textStyle: TextStyle(fontSize: 12.sp),
               ),
             ],
-            selectedIndex: controller.currentIndex.value,
-            onTabChange: (index) {
-              controller.changeTabIndex(index);
-            },
-          )),
+              selectedIndex: controller.currentIndex.value,
+              onTabChange: (index) {
+                controller.changeTabIndex(index);
+              },
+            );
+          }),
         ),
       ),
     );
@@ -132,6 +141,8 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildNavItem(int index, IconData icon, String label, bool isMobile) {
     final isSelected = controller.currentIndex.value == index;
+    final theme = Theme.of(Get.context!);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Expanded(
       child: GestureDetector(
@@ -144,7 +155,9 @@ class HomeView extends GetView<HomeController> {
             vertical: isMobile ? 6.h : 8.h,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+            color: isSelected
+                ? theme.colorScheme.primary.withOpacity(0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Column(
@@ -154,7 +167,9 @@ class HomeView extends GetView<HomeController> {
               Icon(
                 icon,
                 size: isMobile ? 18.r : 20.r,
-                color: isSelected ? Colors.blue : Colors.grey[600],
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withOpacity(0.6),
               ),
               SizedBox(height: 2.h),
               Flexible(
@@ -162,7 +177,9 @@ class HomeView extends GetView<HomeController> {
                   label,
                   style: TextStyle(
                     fontSize: isMobile ? 9.sp : 10.sp,
-                    color: isSelected ? Colors.blue : Colors.grey[600],
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface.withOpacity(0.6),
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
                   textAlign: TextAlign.center,
