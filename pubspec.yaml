@@ -54,6 +54,10 @@ dependencies:
   # Web Scraping
   dio: ^5.4.3+1
   html: ^0.15.4
+  beautiful_soup_dart: ^0.3.0
+
+  # Additional utilities for scraping
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:

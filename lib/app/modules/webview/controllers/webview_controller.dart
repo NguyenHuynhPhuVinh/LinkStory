@@ -4,6 +4,8 @@ import 'package:webview_flutter/webview_flutter.dart' as webview_flutter;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/website_model.dart';
+import '../../../data/services/webview_scraper_service.dart';
+import '../../../data/services/library_service.dart';
 
 class WebViewController extends GetxController {
   late webview_flutter.WebViewController webViewController;
@@ -24,6 +26,15 @@ class WebViewController extends GetxController {
   bool showMenu = false;
   bool showTranslateMenu = false;
 
+  // Library states
+  bool showAddToLibraryButton = false;
+  bool isAddingToLibrary = false;
+  bool isInLibrary = false;
+
+  // Services
+  final WebViewScraperService _webViewScraperService = WebViewScraperService();
+  final LibraryService _libraryService = LibraryService();
+
   @override
   void onInit() {
     super.onInit();
@@ -33,8 +44,15 @@ class WebViewController extends GetxController {
     currentUrl = website.url;
     pageTitle = website.name;
 
-    // Initialize WebView controller immediately
+    // Initialize services and WebView
+    _initializeServices();
     _initializeWebView();
+  }
+
+  Future<void> _initializeServices() async {
+    await _libraryService.init();
+    _checkIfCanScrape(currentUrl);
+    await _checkIfInLibrary(currentUrl);
   }
 
   void _initializeWebView() {
@@ -52,6 +70,8 @@ class WebViewController extends GetxController {
             currentUrl = url;
             _updateSecurityStatus(url);
             _updateNavigationButtons();
+            _checkIfCanScrape(url);
+            _checkIfInLibrary(url);
             update();
           },
           onPageFinished: (String url) {
@@ -225,6 +245,91 @@ class WebViewController extends GetxController {
     } catch (e) {
       Get.snackbar('Lỗi', 'Không thể reset zoom: $e');
     }
+  }
+
+  // Kiểm tra xem URL có thể scrape được không
+  void _checkIfCanScrape(String url) {
+    showAddToLibraryButton = _webViewScraperService.canScrapeUrl(url);
+    update();
+  }
+
+  // Kiểm tra xem truyện đã có trong thư viện chưa
+  Future<void> _checkIfInLibrary(String url) async {
+    isInLibrary = await _libraryService.isUrlExists(url);
+    update();
+  }
+
+  // Thêm truyện vào thư viện
+  Future<void> addToLibrary() async {
+    if (isAddingToLibrary || isInLibrary) return;
+
+    try {
+      isAddingToLibrary = true;
+      update();
+
+      Get.snackbar(
+        'Đang xử lý',
+        'Đang scrape thông tin truyện bằng WebView...',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+
+      final story = await _webViewScraperService.scrapeStory(currentUrl);
+
+      if (story != null) {
+        final success = await _libraryService.addStory(story);
+
+        if (success) {
+          isInLibrary = true;
+          Get.snackbar(
+            'Thành công',
+            'Đã thêm "${story.title}" vào thư viện',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.withOpacity(0.8),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+        } else {
+          Get.snackbar(
+            'Thông báo',
+            'Truyện đã có trong thư viện',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange.withOpacity(0.8),
+            colorText: Colors.white,
+          );
+        }
+      } else {
+        Get.snackbar(
+          'Lỗi',
+          'Không thể scrape thông tin truyện từ trang này. Vui lòng thử lại sau.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        'Có lỗi xảy ra: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    } finally {
+      isAddingToLibrary = false;
+      update();
+    }
+  }
+
+  // Xem truyện trong thư viện
+  void viewInLibrary() {
+    Get.toNamed('/library');
+    Get.snackbar(
+      'Thông báo',
+      'Chuyển đến thư viện để xem truyện',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   @override

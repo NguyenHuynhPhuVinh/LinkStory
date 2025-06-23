@@ -11,6 +11,7 @@ import '../modules/settings/bindings/settings_binding.dart';
 import '../modules/settings/views/settings_view.dart';
 import '../modules/ai/bindings/ai_binding.dart';
 import '../modules/ai/views/ai_view.dart';
+import '../modules/webview/bindings/webview_binding.dart';
 import '../modules/webview/views/webview_view.dart';
 
 part 'app_routes.dart';
@@ -47,6 +48,10 @@ class AppPages {
       binding: SettingsBinding(),
     ),
     GetPage(name: _Paths.AI, page: () => const AiView(), binding: AiBinding()),
-    GetPage(name: _Paths.WEBVIEW, page: () => const WebViewView()),
+    GetPage(
+      name: _Paths.WEBVIEW,
+      page: () => const WebViewView(),
+      binding: WebViewBinding(),
+    ),
   ];
 }
