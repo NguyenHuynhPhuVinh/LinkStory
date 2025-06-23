@@ -9,6 +9,7 @@ abstract class Routes {
   static const HISTORY = _Paths.HISTORY;
   static const SETTINGS = _Paths.SETTINGS;
   static const AI = _Paths.AI;
+  static const WEBVIEW = _Paths.WEBVIEW;
 }
 
 abstract class _Paths {
@@ -19,4 +20,5 @@ abstract class _Paths {
   static const HISTORY = '/history';
   static const SETTINGS = '/settings';
   static const AI = '/ai';
+  static const WEBVIEW = '/webview';
 }

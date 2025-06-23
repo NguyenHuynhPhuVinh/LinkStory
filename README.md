@@ -5,11 +5,13 @@
 ## ✨ Tính năng chính
 
 - 📖 **Đọc truyện offline** - Tải và đọc truyện mà không cần internet
-- 🌐 **Web scraping** - Tự động lấy nội dung từ các website truyện
+- 🌐 **WebView tích hợp** - Xem trực tiếp các website truyện với đầy đủ tính năng như Chrome
+- 🔄 **Dịch trang web** - Dịch trang sang nhiều ngôn ngữ (Việt, Anh, Nhật, Hàn, Trung, Thái)
 - 📚 **Thư viện cá nhân** - Quản lý bộ sưu tập truyện của bạn
 - 📜 **Lịch sử đọc** - Theo dõi tiến độ và lịch sử đọc
 - ⚙️ **Tùy chỉnh đọc** - Thay đổi font, màu nền, kích thước chữ
 - 🎨 **Giao diện đẹp** - Material Design 3 với dark/light mode
+- 🔗 **Chia sẻ & Mở ngoài** - Chia sẻ trang hoặc mở trong trình duyệt ngoài
 
 ## 🏗️ Kiến trúc dự án
 

@@ -210,16 +210,72 @@ class ReaderView extends GetView<ReaderController> {
     );
   }
 
-  // Website icon với GFAvatar
+  // Website icon với CachedNetworkImage và fallback
   Widget _buildWebsiteIcon(Website website) {
     final theme = Theme.of(Get.context!);
 
-    return GFAvatar(
-      backgroundImage: CachedNetworkImageProvider(website.iconUrl),
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-      radius: 24.r,
-      shape: GFAvatarShape.standard,
-      child: Icon(Iconsax.global, size: 24.r, color: theme.colorScheme.primary),
+    return Container(
+      width: 48.w,
+      height: 48.w,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7.r), // Nhỏ hơn 1px để tránh overflow
+        child: CachedNetworkImage(
+          imageUrl: website.iconUrl.isNotEmpty ? website.iconUrl : '',
+          width: 48.w,
+          height: 48.w,
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          placeholder: (context, url) => Container(
+            width: 48.w,
+            height: 48.w,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Iconsax.global,
+                  size: 24.r,
+                  color: theme.colorScheme.primary.withOpacity(0.3),
+                ),
+                SizedBox(
+                  width: 16.w,
+                  height: 16.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            width: 48.w,
+            height: 48.w,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(
+              Iconsax.global,
+              size: 24.r,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

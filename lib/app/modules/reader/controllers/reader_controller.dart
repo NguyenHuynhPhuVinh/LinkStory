@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../../data/models/website_model.dart';
 import '../../../data/services/website_service.dart';
+import '../../../routes/app_pages.dart';
 
 class ReaderController extends GetxController {
   final WebsiteService _websiteService = WebsiteService();
@@ -40,12 +41,7 @@ class ReaderController extends GetxController {
 
   // Mở website
   void openWebsite(Website website) {
-    Get.snackbar(
-      'Đang mở',
-      'Đang mở ${website.name}...',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-    // TODO: Implement navigation to website content
+    Get.toNamed(Routes.WEBVIEW, arguments: website);
   }
 
   // Refresh danh sách

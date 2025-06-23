@@ -16,7 +16,7 @@ class WebsiteService {
       Hive.registerAdapter(WebsiteAdapter());
     }
     _websiteBox = await Hive.openBox<Website>(_boxName);
-    
+
     // Thêm dữ liệu mặc định nếu chưa có
     if (_websiteBox!.isEmpty) {
       await _addDefaultWebsites();
@@ -29,8 +29,8 @@ class WebsiteService {
       Website(
         id: 'hako_ln',
         name: 'Hako Light Novel',
-        url: 'https://ln.hako.vn/',
-        iconUrl: 'https://ln.hako.vn/favicon.ico',
+        url: 'https://docln.sbs/',
+        iconUrl: 'https://docln.sbs/img/favicon.png?v=3',
         description: 'Website đọc light novel tiếng Việt',
       ),
       Website(
@@ -49,7 +49,8 @@ class WebsiteService {
 
   // Lấy tất cả websites
   List<Website> getAllWebsites() {
-    return _websiteBox?.values.where((website) => website.isActive).toList() ?? [];
+    return _websiteBox?.values.where((website) => website.isActive).toList() ??
+        [];
   }
 
   // Lấy website theo ID
@@ -98,14 +99,19 @@ class WebsiteService {
   // Tìm kiếm websites
   List<Website> searchWebsites(String query) {
     if (query.isEmpty) return getAllWebsites();
-    
+
     return _websiteBox?.values
-        .where((website) => 
-            website.isActive &&
-            (website.name.toLowerCase().contains(query.toLowerCase()) ||
-             website.description.toLowerCase().contains(query.toLowerCase()) ||
-             website.url.toLowerCase().contains(query.toLowerCase())))
-        .toList() ?? [];
+            .where(
+              (website) =>
+                  website.isActive &&
+                  (website.name.toLowerCase().contains(query.toLowerCase()) ||
+                      website.description.toLowerCase().contains(
+                        query.toLowerCase(),
+                      ) ||
+                      website.url.toLowerCase().contains(query.toLowerCase())),
+            )
+            .toList() ??
+        [];
   }
 
   // Đóng service
