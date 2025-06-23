@@ -4,17 +4,21 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
 import '../models/story_model.dart';
+import '../models/chapter_model.dart';
+import 'chapter_service.dart';
 
 class WebViewScraperService {
   static final WebViewScraperService _instance = WebViewScraperService._internal();
   factory WebViewScraperService() => _instance;
   WebViewScraperService._internal();
 
+  final ChapterService _chapterService = ChapterService();
+
   // Scrape story từ URL sử dụng WebView
   Future<Story?> scrapeStory(String url) async {
     try {
       print('Starting WebView-based scraping from: $url');
-      
+
       // Xác định website và gọi scraper tương ứng
       if (url.contains('docln.sbs') || url.contains('hako.vn')) {
         return await _scrapeHakoStoryWithWebView(url);
@@ -25,6 +29,25 @@ class WebViewScraperService {
       return null;
     } catch (e) {
       print('Error in WebView scraping: $e');
+      return null;
+    }
+  }
+
+  // Scrape story với chapters từ URL sử dụng WebView
+  Future<Map<String, dynamic>?> scrapeStoryWithChapters(String url, {bool scrapeContent = false}) async {
+    try {
+      print('Starting WebView-based scraping with chapters from: $url');
+
+      // Xác định website và gọi scraper tương ứng
+      if (url.contains('docln.sbs') || url.contains('hako.vn')) {
+        return await _scrapeHakoStoryWithChaptersWebView(url, scrapeContent: scrapeContent);
+      } else if (url.contains('syosetu.com')) {
+        return await _scrapeSyosetuStoryWithChaptersWebView(url, scrapeContent: scrapeContent);
+      }
+
+      return null;
+    } catch (e) {
+      print('Error in WebView scraping with chapters: $e');
       return null;
     }
   }
@@ -180,10 +203,217 @@ class WebViewScraperService {
     }
   }
 
+  // Scrape từ Hako/DocLN với chapters sử dụng WebView
+  Future<Map<String, dynamic>?> _scrapeHakoStoryWithChaptersWebView(String url, {bool scrapeContent = false}) async {
+    try {
+      final Completer<Map<String, dynamic>?> completer = Completer<Map<String, dynamic>?>();
+      late WebViewController controller;
+
+      // Tạo WebView controller
+      controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageFinished: (String finishedUrl) async {
+              if (finishedUrl == url) {
+                // Đợi một chút để JavaScript render xong
+                await Future.delayed(const Duration(seconds: 3));
+
+                try {
+                  // Lấy HTML đã được render
+                  final html = await controller.runJavaScriptReturningResult(
+                    'document.documentElement.outerHTML'
+                  );
+
+                  // Xử lý HTML string (loại bỏ quotes)
+                  String htmlContent = html.toString();
+                  if (htmlContent.startsWith('"') && htmlContent.endsWith('"')) {
+                    htmlContent = htmlContent.substring(1, htmlContent.length - 1);
+                  }
+
+                  // Decode escaped characters
+                  htmlContent = htmlContent
+                      .replaceAll('\\"', '"')
+                      .replaceAll('\\n', '\n')
+                      .replaceAll('\\t', '\t')
+                      .replaceAll('\\/', '/')
+                      .replaceAll('\\u003C', '<')
+                      .replaceAll('\\u003E', '>')
+                      .replaceAll('\\u0026', '&')
+                      .replaceAll('\\u0027', "'");
+
+                  print('HTML content length: ${htmlContent.length}');
+
+                  // Parse HTML và trích xuất thông tin
+                  final document = html_parser.parse(htmlContent);
+                  final result = await _extractStoryWithChaptersFromDocument(document, url, scrapeContent: scrapeContent);
+
+                  completer.complete(result);
+                } catch (e) {
+                  print('Error extracting HTML from WebView: $e');
+                  completer.complete(null);
+                }
+              }
+            },
+            onWebResourceError: (WebResourceError error) {
+              print('WebView error: ${error.description}');
+              if (!completer.isCompleted) {
+                completer.complete(null);
+              }
+            },
+          ),
+        );
+
+      // Load URL
+      await controller.loadRequest(Uri.parse(url));
+
+      // Đợi kết quả với timeout
+      return await completer.future.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print('WebView scraping timeout');
+          return null;
+        },
+      );
+
+    } catch (e) {
+      print('Error in WebView scraping with chapters: $e');
+      return null;
+    }
+  }
+
   // Scrape từ Syosetu (placeholder)
   Future<Story?> _scrapeSyosetuStoryWithWebView(String url) async {
     // TODO: Implement Syosetu WebView scraper
     return null;
+  }
+
+  // Scrape từ Syosetu với chapters (placeholder)
+  Future<Map<String, dynamic>?> _scrapeSyosetuStoryWithChaptersWebView(String url, {bool scrapeContent = false}) async {
+    // TODO: Implement Syosetu WebView scraper with chapters
+    return null;
+  }
+
+  // Trích xuất thông tin story với chapters từ document
+  Future<Map<String, dynamic>?> _extractStoryWithChaptersFromDocument(dom.Document document, String url, {bool scrapeContent = false}) async {
+    try {
+      print('Extracting story with chapters from rendered HTML...');
+
+      // Trích xuất thông tin story cơ bản
+      final story = await _extractStoryFromDocument(document, url);
+      if (story == null) {
+        print('Failed to extract story information');
+        return null;
+      }
+
+      // Trích xuất danh sách chapters
+      final chapters = await _extractChaptersFromDocument(document, story.id, url);
+      print('Extracted ${chapters.length} chapters');
+
+      // Cập nhật totalChapters cho story
+      final updatedStory = story.copyWith(totalChapters: chapters.length);
+
+      // Scrape nội dung chapters nếu được yêu cầu
+      if (scrapeContent && chapters.isNotEmpty) {
+        print('Starting to scrape chapter contents...');
+        await _scrapeChapterContents(chapters);
+      }
+
+      return {
+        'story': updatedStory,
+        'chapters': chapters,
+        'scraped_content': scrapeContent,
+      };
+    } catch (e) {
+      print('Error extracting story with chapters: $e');
+      return null;
+    }
+  }
+
+  // Trích xuất danh sách chapters từ document
+  Future<List<Chapter>> _extractChaptersFromDocument(dom.Document document, String storyId, String baseUrl) async {
+    final chapters = <Chapter>[];
+
+    try {
+      // Tìm tất cả volume sections
+      final volumeSections = document.querySelectorAll('section.volume-list');
+      print('Found ${volumeSections.length} volume sections');
+
+      int globalChapterNumber = 1;
+
+      for (int volumeIndex = 0; volumeIndex < volumeSections.length; volumeIndex++) {
+        final volumeSection = volumeSections[volumeIndex];
+
+        // Trích xuất tên volume
+        final volumeTitleElement = volumeSection.querySelector('.sect-title');
+        final volumeTitle = volumeTitleElement?.text.trim() ?? 'Tập ${volumeIndex + 1}';
+        final volumeNumber = volumeIndex + 1;
+
+        print('Processing volume: $volumeTitle');
+
+        // Tìm tất cả chapters trong volume này
+        final chapterElements = volumeSection.querySelectorAll('.list-chapters li');
+        print('Found ${chapterElements.length} chapters in $volumeTitle');
+
+        for (final chapterElement in chapterElements) {
+          try {
+            final chapterLink = chapterElement.querySelector('a');
+            if (chapterLink == null) continue;
+
+            final chapterTitle = chapterLink.attributes['title'] ?? chapterLink.text.trim();
+            final chapterUrl = chapterLink.attributes['href'] ?? '';
+
+            if (chapterTitle.isEmpty || chapterUrl.isEmpty) continue;
+
+            // Tạo URL đầy đủ
+            final fullChapterUrl = chapterUrl.startsWith('http')
+                ? chapterUrl
+                : '${Uri.parse(baseUrl).origin}$chapterUrl';
+
+            // Trích xuất thời gian publish
+            final timeElement = chapterElement.querySelector('.chapter-time');
+            final timeText = timeElement?.text.trim() ?? '';
+            final publishedAt = _parseDate(timeText);
+
+            // Kiểm tra có ảnh minh họa không
+            final hasImages = chapterElement.querySelector('.fas.fa-image') != null;
+
+            // Tạo chapter ID từ URL
+            final chapterId = _generateChapterId(fullChapterUrl);
+
+            final chapter = Chapter(
+              id: chapterId,
+              storyId: storyId,
+              title: chapterTitle,
+              url: fullChapterUrl,
+              chapterNumber: globalChapterNumber,
+              volumeTitle: volumeTitle,
+              volumeNumber: volumeNumber,
+              publishedAt: publishedAt,
+              hasImages: hasImages,
+              metadata: {
+                'scraped_at': DateTime.now().toIso8601String(),
+                'scraper_version': '3.0_webview',
+                'volume_index': volumeIndex,
+              },
+            );
+
+            chapters.add(chapter);
+            globalChapterNumber++;
+
+            print('Added chapter: $chapterTitle');
+          } catch (e) {
+            print('Error processing chapter: $e');
+          }
+        }
+      }
+
+      print('Successfully extracted ${chapters.length} chapters');
+      return chapters;
+    } catch (e) {
+      print('Error extracting chapters: $e');
+      return chapters;
+    }
   }
 
   // Trích xuất tiêu đề từ Hako/DocLN
@@ -372,6 +602,179 @@ class WebViewScraperService {
     return url.contains('docln.sbs') ||
         url.contains('hako.vn') ||
         url.contains('syosetu.com');
+  }
+
+  // Scrape nội dung của các chapters
+  Future<void> _scrapeChapterContents(List<Chapter> chapters) async {
+    for (int i = 0; i < chapters.length; i++) {
+      final chapter = chapters[i];
+      print('Scraping content for chapter ${i + 1}/${chapters.length}: ${chapter.title}');
+
+      try {
+        final content = await _scrapeChapterContent(chapter.url);
+        if (content.isNotEmpty) {
+          chapters[i] = chapter.copyWith(
+            content: content,
+            wordCount: _countWords(content),
+          );
+          print('Successfully scraped content for: ${chapter.title}');
+        } else {
+          print('No content found for: ${chapter.title}');
+        }
+      } catch (e) {
+        print('Error scraping content for ${chapter.title}: $e');
+      }
+
+      // Delay để tránh spam requests
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
+  // Scrape nội dung của một chapter
+  Future<String> _scrapeChapterContent(String chapterUrl) async {
+    try {
+      final Completer<String> completer = Completer<String>();
+      late WebViewController controller;
+
+      controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageFinished: (String finishedUrl) async {
+              if (finishedUrl == chapterUrl && !completer.isCompleted) {
+                await Future.delayed(const Duration(seconds: 2));
+
+                try {
+                  final html = await controller.runJavaScriptReturningResult(
+                    'document.documentElement.outerHTML'
+                  );
+
+                  String htmlContent = html.toString();
+                  if (htmlContent.startsWith('"') && htmlContent.endsWith('"')) {
+                    htmlContent = htmlContent.substring(1, htmlContent.length - 1);
+                  }
+
+                  htmlContent = htmlContent
+                      .replaceAll('\\"', '"')
+                      .replaceAll('\\n', '\n')
+                      .replaceAll('\\t', '\t')
+                      .replaceAll('\\/', '/')
+                      .replaceAll('\\u003C', '<')
+                      .replaceAll('\\u003E', '>')
+                      .replaceAll('\\u0026', '&')
+                      .replaceAll('\\u0027', "'");
+
+                  final document = html_parser.parse(htmlContent);
+                  final content = _extractChapterContentFromDocument(document);
+
+                  if (!completer.isCompleted) {
+                    completer.complete(content);
+                  }
+                } catch (e) {
+                  print('Error extracting chapter content: $e');
+                  if (!completer.isCompleted) {
+                    completer.complete('');
+                  }
+                }
+              }
+            },
+            onWebResourceError: (WebResourceError error) {
+              if (!completer.isCompleted) {
+                completer.complete('');
+              }
+            },
+          ),
+        );
+
+      await controller.loadRequest(Uri.parse(chapterUrl));
+
+      return await completer.future.timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          if (!completer.isCompleted) {
+            completer.complete('');
+          }
+          return '';
+        },
+      );
+    } catch (e) {
+      print('Error scraping chapter content: $e');
+      return '';
+    }
+  }
+
+  // Trích xuất nội dung chapter từ document
+  String _extractChapterContentFromDocument(dom.Document document) {
+    // Tìm content container
+    final contentElement = document.querySelector('#chapter-content') ??
+                          document.querySelector('.chapter-content') ??
+                          document.querySelector('.long-text');
+
+    if (contentElement == null) {
+      print('Chapter content element not found');
+      return '';
+    }
+
+    // Lấy tất cả paragraphs
+    final paragraphs = contentElement.querySelectorAll('p');
+    final contentLines = <String>[];
+
+    for (final paragraph in paragraphs) {
+      final text = paragraph.text.trim();
+      if (text.isNotEmpty) {
+        contentLines.add(text);
+      }
+    }
+
+    return contentLines.join('\n\n');
+  }
+
+  // Parse date từ string
+  DateTime _parseDate(String dateText) {
+    try {
+      // Xử lý các format date khác nhau
+      if (dateText.contains('/')) {
+        final parts = dateText.split('/');
+        if (parts.length == 3) {
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          return DateTime(year, month, day);
+        }
+      }
+
+      // Fallback
+      return DateTime.now();
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+  // Tạo chapter ID từ URL
+  String _generateChapterId(String url) {
+    final uri = Uri.parse(url);
+    final pathSegments = uri.pathSegments;
+
+    // Tìm segment chứa chapter ID
+    for (final segment in pathSegments) {
+      if (segment.startsWith('c') && RegExp(r'^c\d+').hasMatch(segment)) {
+        return '${uri.host}_$segment';
+      }
+    }
+
+    // Fallback: sử dụng hash của URL
+    return '${uri.host}_chapter_${url.hashCode.abs()}';
+  }
+
+  // Đếm từ trong text
+  int _countWords(String text) {
+    if (text.isEmpty) return 0;
+    return text.trim().split(RegExp(r'\s+')).length;
+  }
+
+  // Public method để scrape nội dung một chương
+  Future<String> scrapeChapterContent(String chapterUrl) async {
+    return await _scrapeChapterContent(chapterUrl);
   }
 
   // Lấy tên website từ URL

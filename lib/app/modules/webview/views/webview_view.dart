@@ -192,10 +192,10 @@ class WebViewView extends GetView<controllers.WebViewController> {
                 ? controller.viewInLibrary
                 : controller.addToLibrary),
       tooltip: controller.isAddingToLibrary
-          ? 'Đang thêm...'
+          ? 'Đang scrape truyện và chương...'
           : (controller.isInLibrary
                 ? 'Xem trong thư viện'
-                : 'Thêm vào thư viện'),
+                : 'Thêm truyện + chương vào thư viện'),
     );
   }
 

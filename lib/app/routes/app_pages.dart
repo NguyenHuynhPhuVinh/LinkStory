@@ -13,6 +13,10 @@ import '../modules/ai/bindings/ai_binding.dart';
 import '../modules/ai/views/ai_view.dart';
 import '../modules/webview/bindings/webview_binding.dart';
 import '../modules/webview/views/webview_view.dart';
+import '../modules/story_detail/bindings/story_detail_binding.dart';
+import '../modules/story_detail/views/story_detail_view.dart';
+import '../modules/reading/bindings/reading_binding.dart';
+import '../modules/reading/views/reading_view.dart';
 
 part 'app_routes.dart';
 
@@ -52,6 +56,16 @@ class AppPages {
       name: _Paths.WEBVIEW,
       page: () => const WebViewView(),
       binding: WebViewBinding(),
+    ),
+    GetPage(
+      name: _Paths.STORY_DETAIL,
+      page: () => const StoryDetailView(),
+      binding: StoryDetailBinding(),
+    ),
+    GetPage(
+      name: _Paths.READING,
+      page: () => const ReadingView(),
+      binding: ReadingBinding(),
     ),
   ];
 }

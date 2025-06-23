@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/website_model.dart';
 import '../../../data/services/webview_scraper_service.dart';
 import '../../../data/services/library_service.dart';
+import '../../../data/services/chapter_service.dart';
+import '../../../data/models/chapter_model.dart';
 
 class WebViewController extends GetxController {
   late webview_flutter.WebViewController webViewController;
@@ -34,6 +36,7 @@ class WebViewController extends GetxController {
   // Services
   final WebViewScraperService _webViewScraperService = WebViewScraperService();
   final LibraryService _libraryService = LibraryService();
+  final ChapterService _chapterService = ChapterService();
 
   @override
   void onInit() {
@@ -259,7 +262,7 @@ class WebViewController extends GetxController {
     update();
   }
 
-  // Thêm truyện vào thư viện
+  // Thêm truyện vào thư viện (luôn với danh sách chương)
   Future<void> addToLibrary() async {
     if (isAddingToLibrary || isInLibrary) return;
 
@@ -269,34 +272,50 @@ class WebViewController extends GetxController {
 
       Get.snackbar(
         'Đang xử lý',
-        'Đang scrape thông tin truyện bằng WebView...',
+        'Đang scrape thông tin truyện và danh sách chương...',
         snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 5),
       );
 
-      final story = await _webViewScraperService.scrapeStory(currentUrl);
+      // Khởi tạo chapter service
+      await _chapterService.init();
 
-      if (story != null) {
-        final success = await _libraryService.addStory(story);
+      final result = await _webViewScraperService.scrapeStoryWithChapters(
+        currentUrl,
+        scrapeContent: false // Không tải nội dung từng chương
+      );
 
-        if (success) {
-          isInLibrary = true;
-          Get.snackbar(
-            'Thành công',
-            'Đã thêm "${story.title}" vào thư viện',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green.withOpacity(0.8),
-            colorText: Colors.white,
-            duration: const Duration(seconds: 3),
-          );
-        } else {
-          Get.snackbar(
-            'Thông báo',
-            'Truyện đã có trong thư viện',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange.withOpacity(0.8),
-            colorText: Colors.white,
-          );
+      if (result != null) {
+        final story = result['story'];
+        final chapters = (result['chapters'] as List).cast<Chapter>();
+
+        if (story != null) {
+          // Thêm story vào library
+          final storySuccess = await _libraryService.addStory(story);
+
+          if (storySuccess) {
+            // Thêm chapters vào database
+            final chapterCount = await _chapterService.addChapters(chapters);
+
+            isInLibrary = true;
+
+            Get.snackbar(
+              'Thành công',
+              'Đã thêm "${story.title}" với $chapterCount chương vào thư viện',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green.withOpacity(0.8),
+              colorText: Colors.white,
+              duration: const Duration(seconds: 5),
+            );
+          } else {
+            Get.snackbar(
+              'Thông báo',
+              'Truyện đã có trong thư viện',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange.withOpacity(0.8),
+              colorText: Colors.white,
+            );
+          }
         }
       } else {
         Get.snackbar(
@@ -321,6 +340,8 @@ class WebViewController extends GetxController {
       update();
     }
   }
+
+
 
   // Xem truyện trong thư viện
   void viewInLibrary() {

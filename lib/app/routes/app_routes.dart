@@ -10,6 +10,8 @@ abstract class Routes {
   static const SETTINGS = _Paths.SETTINGS;
   static const AI = _Paths.AI;
   static const WEBVIEW = _Paths.WEBVIEW;
+  static const STORY_DETAIL = _Paths.STORY_DETAIL;
+  static const READING = _Paths.READING;
 }
 
 abstract class _Paths {
@@ -21,4 +23,6 @@ abstract class _Paths {
   static const SETTINGS = '/settings';
   static const AI = '/ai';
   static const WEBVIEW = '/webview';
+  static const STORY_DETAIL = '/story-detail';
+  static const READING = '/reading';
 }
