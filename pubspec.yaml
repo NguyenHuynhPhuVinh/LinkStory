@@ -24,6 +24,10 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
+  # Responsive Design
+  flutter_screenutil: ^5.9.3
+  responsive_framework: ^1.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
