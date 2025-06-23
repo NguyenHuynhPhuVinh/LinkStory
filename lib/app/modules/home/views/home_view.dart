@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:responsive_framework/responsive_framework.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 import '../controllers/home_controller.dart';
 import '../../library/views/library_view.dart';
@@ -33,9 +33,15 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildResponsiveNavBar() {
-    return ResponsiveBreakpoints.of(Get.context!).isMobile
-        ? _buildMobileNavBar()
-        : _buildTabletNavBar();
+    return ResponsiveBuilder(
+      builder: (context, sizingInformation) {
+        if (sizingInformation.deviceScreenType == DeviceScreenType.mobile) {
+          return _buildMobileNavBar();
+        } else {
+          return _buildTabletNavBar();
+        }
+      },
+    );
   }
 
   Widget _buildMobileNavBar() {

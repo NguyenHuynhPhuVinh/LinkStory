@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 
 import 'app/routes/app_pages.dart';
 
@@ -27,17 +26,6 @@ class LinkStoryApp extends StatelessWidget {
       builder: (context, child) {
         return GetMaterialApp(
           title: 'LinkStory',
-          builder: (context, child) {
-            return ResponsiveBreakpoints.builder(
-              child: child!,
-              breakpoints: [
-                const Breakpoint(start: 0, end: 450, name: MOBILE),
-                const Breakpoint(start: 451, end: 800, name: TABLET),
-                const Breakpoint(start: 801, end: 1920, name: DESKTOP),
-                const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
-              ],
-            );
-          },
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.blue,

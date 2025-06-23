@@ -12,9 +12,13 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # UI Components
+  getwidget: ^6.0.0
+  cached_network_image: ^3.3.1
+  flutter_html: ^3.0.0-beta.2
   google_nav_bar: ^5.0.6
 
   # Icons
+  flutter_svg: ^2.0.10+1
   iconsax: ^0.0.8
 
   # State Management & Navigation
@@ -23,10 +27,26 @@ dependencies:
   # Storage
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  flutter_secure_storage: ^9.2.2
 
-  # Responsive Design
+  # UI Enhancements
+  shimmer: ^3.0.0
+  liquid_pull_to_refresh: ^3.0.1
+  smooth_page_indicator: ^1.1.0
+  auto_size_text: ^3.0.0
+
+  # Responsive & Layout
   flutter_screenutil: ^5.9.3
-  responsive_framework: ^1.4.0
+  responsive_builder: ^0.7.0
+  flutter_layout_grid: ^2.0.7
+
+  # Utilities
+  connectivity_plus: ^6.0.3
+  url_launcher: ^6.2.6
+
+  # Web Scraping
+  dio: ^5.4.3+1
+  html: ^0.15.4
 
 dev_dependencies:
   flutter_test:
