@@ -86,9 +86,7 @@ class AiChatService {
       ),
       safetySettings: _buildSafetySettings(settings.safetySettings),
       systemInstruction: Content.text(settings.systemPrompt),
-      tools: [
-        Tool.functionDeclarations(_getFunctionDeclarations()),
-      ],
+      tools: [Tool.functionDeclarations(_getFunctionDeclarations())],
     );
   }
 
@@ -143,16 +141,19 @@ class AiChatService {
       // Lấy danh sách truyện
       FunctionDeclaration(
         'getStoryList',
-        'Lấy danh sách tất cả truyện trong thư viện của người dùng',
+        'Lấy danh sách tất cả truyện trong thư viện của người dùng. Trả về danh sách truyện với ID (string) để có thể sử dụng cho getStoryDetails và getChapterList. Ví dụ ID: "story_123456789", "novel_abc_def".',
         parameters: {
           'limit': Schema.integer(
-            description: 'Số lượng truyện tối đa muốn lấy (mặc định: 20)',
+            description:
+                'Số lượng truyện tối đa muốn lấy (mặc định: 20, tối đa: 100)',
           ),
           'sortBy': Schema.string(
-            description: 'Sắp xếp theo: "title" (tên), "author" (tác giả), "updatedAt" (cập nhật), "rating" (đánh giá), "readChapters" (chương đã đọc)',
+            description:
+                'Sắp xếp theo: "title" (tên), "author" (tác giả), "updatedAt" (cập nhật mới nhất), "rating" (đánh giá cao), "readChapters" (đã đọc nhiều)',
           ),
           'filterBy': Schema.string(
-            description: 'Lọc theo: "all" (tất cả), "favorites" (yêu thích), "reading" (đang đọc), "completed" (hoàn thành)',
+            description:
+                'Lọc theo: "all" (tất cả), "favorites" (yêu thích), "reading" (đang đọc), "completed" (đã hoàn thành)',
           ),
         },
       ),
@@ -160,10 +161,11 @@ class AiChatService {
       // Lấy thông tin chi tiết truyện
       FunctionDeclaration(
         'getStoryDetails',
-        'Lấy thông tin chi tiết của một truyện cụ thể',
+        'Lấy thông tin chi tiết của một truyện cụ thể bằng storyId (string). Sử dụng chính xác ID từ kết quả getStoryList hoặc searchStories. Ví dụ: storyId = "story_123456789".',
         parameters: {
           'storyId': Schema.string(
-            description: 'ID của truyện cần lấy thông tin chi tiết',
+            description:
+                'ID string của truyện (ví dụ: "story_123456789", "novel_abc_def") - lấy từ field "id" trong kết quả getStoryList hoặc searchStories',
           ),
         },
       ),
@@ -171,13 +173,15 @@ class AiChatService {
       // Tìm kiếm truyện
       FunctionDeclaration(
         'searchStories',
-        'Tìm kiếm truyện theo từ khóa trong tên, tác giả, mô tả hoặc thể loại',
+        'Tìm kiếm truyện theo từ khóa trong tên, tác giả, mô tả hoặc thể loại. Trả về danh sách kết quả với ID (string) để có thể sử dụng cho getStoryDetails và getChapterList.',
         parameters: {
           'query': Schema.string(
-            description: 'Từ khóa tìm kiếm',
+            description:
+                'Từ khóa tìm kiếm (ví dụ: "sword art", "isekai", "romance")',
           ),
           'searchIn': Schema.string(
-            description: 'Tìm kiếm trong: "all" (tất cả), "title" (tên), "author" (tác giả), "description" (mô tả), "genres" (thể loại)',
+            description:
+                'Tìm kiếm trong: "all" (tất cả), "title" (tên), "author" (tác giả), "description" (mô tả), "genres" (thể loại)',
           ),
         },
       ),
@@ -185,13 +189,15 @@ class AiChatService {
       // Lấy danh sách chương của truyện
       FunctionDeclaration(
         'getChapterList',
-        'Lấy danh sách chương của một truyện cụ thể',
+        'Lấy danh sách chương của một truyện cụ thể bằng storyId (string). Trả về danh sách chương với chapterId để có thể đọc nội dung. Ví dụ: storyId = "ncode.syosetu.com_n1706ko".',
         parameters: {
           'storyId': Schema.string(
-            description: 'ID của truyện cần lấy danh sách chương',
+            description:
+                'ID string của truyện (ví dụ: "ncode.syosetu.com_n1706ko", "domain.com_code") - lấy từ field "id" trong kết quả getStoryList, getStoryDetails hoặc searchStories',
           ),
           'limit': Schema.integer(
-            description: 'Số lượng chương tối đa muốn lấy (mặc định: 50)',
+            description:
+                'Số lượng chương tối đa muốn lấy (mặc định: 50, tối đa: 200)',
           ),
         },
       ),
@@ -199,10 +205,11 @@ class AiChatService {
       // Lấy nội dung chương
       FunctionDeclaration(
         'getChapterContent',
-        'Lấy nội dung chi tiết của một chương cụ thể',
+        'Lấy nội dung chi tiết của một chương cụ thể bằng chapterId (string). Sử dụng chính xác ID từ kết quả getChapterList. Ví dụ: chapterId = "ncode.syosetu.com_n1706ko_c1", "domain.com_code_cchapter1".',
         parameters: {
           'chapterId': Schema.string(
-            description: 'ID của chương cần lấy nội dung',
+            description:
+                'ID string của chương (ví dụ: "ncode.syosetu.com_n1706ko_c1", "domain.com_code_cchapter1") - lấy từ field "id" trong kết quả getChapterList',
           ),
         },
       ),
@@ -210,8 +217,12 @@ class AiChatService {
   }
 
   // Xử lý function calls
-  Future<Map<String, dynamic>> _handleFunctionCall(FunctionCall functionCall) async {
-    print('🔧 Handling function call: ${functionCall.name} with args: ${functionCall.args}');
+  Future<Map<String, dynamic>> _handleFunctionCall(
+    FunctionCall functionCall,
+  ) async {
+    print(
+      '🔧 Handling function call: ${functionCall.name} with args: ${functionCall.args}',
+    );
 
     try {
       Map<String, dynamic> result;
@@ -232,23 +243,59 @@ class AiChatService {
           result = await _getChapterContent(functionCall.args);
           break;
         default:
-          result = {'success': false, 'error': 'Hàm không được hỗ trợ: ${functionCall.name}'};
+          result = {
+            'success': false,
+            'error': 'Hàm không được hỗ trợ: ${functionCall.name}',
+          };
       }
 
       print('🔧 Function call result: $result');
       return result;
     } catch (e) {
       print('❌ Error in function call ${functionCall.name}: $e');
-      return {'success': false, 'error': 'Lỗi khi thực thi hàm ${functionCall.name}: $e'};
+      return {
+        'success': false,
+        'error': 'Lỗi khi thực thi hàm ${functionCall.name}: $e',
+      };
     }
   }
 
   // Lấy danh sách truyện
   Future<Map<String, dynamic>> _getStoryList(Map<String, dynamic> args) async {
     try {
-      final int limit = args['limit'] ?? 20;
+      // Validation và giới hạn tham số
+      int limit = args['limit'] ?? 20;
+      if (limit < 1) limit = 1;
+      if (limit > 100) limit = 100;
+
       final String sortBy = args['sortBy'] ?? 'updatedAt';
       final String filterBy = args['filterBy'] ?? 'all';
+
+      // Validate sortBy
+      final validSortOptions = [
+        'title',
+        'author',
+        'updatedAt',
+        'rating',
+        'readChapters',
+      ];
+      if (!validSortOptions.contains(sortBy)) {
+        return {
+          'success': false,
+          'error':
+              'Tùy chọn sắp xếp không hợp lệ. Chỉ chấp nhận: ${validSortOptions.join(', ')}',
+        };
+      }
+
+      // Validate filterBy
+      final validFilterOptions = ['all', 'favorites', 'reading', 'completed'];
+      if (!validFilterOptions.contains(filterBy)) {
+        return {
+          'success': false,
+          'error':
+              'Tùy chọn lọc không hợp lệ. Chỉ chấp nhận: ${validFilterOptions.join(', ')}',
+        };
+      }
 
       List<Story> stories = _libraryService!.getAllStories();
 
@@ -258,10 +305,18 @@ class AiChatService {
           stories = stories.where((s) => s.isFavorite).toList();
           break;
         case 'reading':
-          stories = stories.where((s) => s.readChapters > 0 && s.readChapters < s.totalChapters).toList();
+          stories = stories
+              .where(
+                (s) => s.readChapters > 0 && s.readChapters < s.totalChapters,
+              )
+              .toList();
           break;
         case 'completed':
-          stories = stories.where((s) => s.readChapters >= s.totalChapters && s.totalChapters > 0).toList();
+          stories = stories
+              .where(
+                (s) => s.readChapters >= s.totalChapters && s.totalChapters > 0,
+              )
+              .toList();
           break;
         case 'all':
         default:
@@ -272,10 +327,18 @@ class AiChatService {
       // Sắp xếp truyện
       switch (sortBy) {
         case 'title':
-          stories.sort((a, b) => (a.translatedTitle ?? a.title).compareTo(b.translatedTitle ?? b.title));
+          stories.sort(
+            (a, b) => (a.translatedTitle ?? a.title).compareTo(
+              b.translatedTitle ?? b.title,
+            ),
+          );
           break;
         case 'author':
-          stories.sort((a, b) => (a.translatedAuthor ?? a.author).compareTo(b.translatedAuthor ?? b.author));
+          stories.sort(
+            (a, b) => (a.translatedAuthor ?? a.author).compareTo(
+              b.translatedAuthor ?? b.author,
+            ),
+          );
           break;
         case 'rating':
           stories.sort((a, b) => b.rating.compareTo(a.rating));
@@ -295,23 +358,27 @@ class AiChatService {
       }
 
       // Chuyển đổi sang format đơn giản cho AI
-      final storyList = stories.map((story) => {
-        'id': story.id,
-        'title': story.translatedTitle ?? story.title,
-        'originalTitle': story.title,
-        'author': story.translatedAuthor ?? story.author,
-        'originalAuthor': story.author,
-        'description': story.translatedDescription ?? story.description,
-        'genres': story.translatedGenres ?? story.genres,
-        'status': story.status,
-        'totalChapters': story.totalChapters,
-        'readChapters': story.readChapters,
-        'rating': story.rating,
-        'isFavorite': story.isFavorite,
-        'lastReadAt': story.lastReadAt?.toIso8601String(),
-        'updatedAt': story.updatedAt.toIso8601String(),
-        'isTranslated': story.isTranslated,
-      }).toList();
+      final storyList = stories
+          .map(
+            (story) => {
+              'id': story.id,
+              'title': story.translatedTitle ?? story.title,
+              'originalTitle': story.title,
+              'author': story.translatedAuthor ?? story.author,
+              'originalAuthor': story.author,
+              'description': story.translatedDescription ?? story.description,
+              'genres': story.translatedGenres ?? story.genres,
+              'status': story.status,
+              'totalChapters': story.totalChapters,
+              'readChapters': story.readChapters,
+              'rating': story.rating,
+              'isFavorite': story.isFavorite,
+              'lastReadAt': story.lastReadAt?.toIso8601String(),
+              'updatedAt': story.updatedAt.toIso8601String(),
+              'isTranslated': story.isTranslated,
+            },
+          )
+          .toList();
 
       return {
         'success': true,
@@ -320,26 +387,41 @@ class AiChatService {
           'total': storyList.length,
           'filter': filterBy,
           'sortBy': sortBy,
-        }
+          'message': storyList.isEmpty
+              ? 'Không có truyện nào trong thư viện. Hãy thêm truyện từ trang web hoặc import dữ liệu.'
+              : 'Đã tìm thấy ${storyList.length} truyện. Sử dụng field "id" để gọi getStoryDetails hoặc getChapterList.',
+          'usage': storyList.isNotEmpty
+              ? 'Ví dụ: getStoryDetails(storyId: "${storyList.first['id']}") hoặc getChapterList(storyId: "${storyList.first['id']}")'
+              : null,
+        },
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Lỗi khi lấy danh sách truyện: $e'
-      };
+      return {'success': false, 'error': 'Lỗi khi lấy danh sách truyện: $e'};
     }
   }
 
   // Lấy thông tin chi tiết truyện
-  Future<Map<String, dynamic>> _getStoryDetails(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _getStoryDetails(
+    Map<String, dynamic> args,
+  ) async {
     try {
-      final String storyId = args['storyId'];
+      // Validation tham số
+      final String? storyIdArg = args['storyId'];
+      if (storyIdArg == null || storyIdArg.isEmpty) {
+        return {
+          'success': false,
+          'error':
+              'Thiếu storyId. Vui lòng sử dụng ID từ getStoryList hoặc searchStories.',
+        };
+      }
+
+      final String storyId = storyIdArg;
       final Story? story = _libraryService!.getStoryById(storyId);
 
       if (story == null) {
         return {
           'success': false,
-          'error': 'Không tìm thấy truyện với ID: $storyId'
+          'error': 'Không tìm thấy truyện với ID: $storyId',
         };
       }
 
@@ -379,16 +461,15 @@ class AiChatService {
             'chaptersInDatabase': chapters.length,
             'readChapters': readChapters,
             'totalWords': totalWords,
-            'averageWordsPerChapter': chapters.isNotEmpty ? (totalWords / chapters.length).round() : 0,
+            'averageWordsPerChapter': chapters.isNotEmpty
+                ? (totalWords / chapters.length).round()
+                : 0,
           },
           'metadata': story.metadata,
-        }
+        },
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Lỗi khi lấy thông tin truyện: $e'
-      };
+      return {'success': false, 'error': 'Lỗi khi lấy thông tin truyện: $e'};
     }
   }
 
@@ -401,7 +482,7 @@ class AiChatService {
       if (query.isEmpty) {
         return {
           'success': false,
-          'error': 'Từ khóa tìm kiếm không được để trống'
+          'error': 'Từ khóa tìm kiếm không được để trống',
         };
       }
 
@@ -413,30 +494,54 @@ class AiChatService {
 
         switch (searchIn) {
           case 'title':
-            matches = (story.translatedTitle ?? story.title).toLowerCase().contains(query) ||
-                     story.title.toLowerCase().contains(query);
+            matches =
+                (story.translatedTitle ?? story.title).toLowerCase().contains(
+                  query,
+                ) ||
+                story.title.toLowerCase().contains(query);
             break;
           case 'author':
-            matches = (story.translatedAuthor ?? story.author).toLowerCase().contains(query) ||
-                     story.author.toLowerCase().contains(query);
+            matches =
+                (story.translatedAuthor ?? story.author).toLowerCase().contains(
+                  query,
+                ) ||
+                story.author.toLowerCase().contains(query);
             break;
           case 'description':
-            matches = (story.translatedDescription ?? story.description).toLowerCase().contains(query) ||
-                     story.description.toLowerCase().contains(query);
+            matches =
+                (story.translatedDescription ?? story.description)
+                    .toLowerCase()
+                    .contains(query) ||
+                story.description.toLowerCase().contains(query);
             break;
           case 'genres':
-            final allGenres = [...(story.translatedGenres ?? []), ...story.genres];
-            matches = allGenres.any((genre) => genre.toLowerCase().contains(query));
+            final allGenres = [
+              ...(story.translatedGenres ?? []),
+              ...story.genres,
+            ];
+            matches = allGenres.any(
+              (genre) => genre.toLowerCase().contains(query),
+            );
             break;
           case 'all':
           default:
-            matches = (story.translatedTitle ?? story.title).toLowerCase().contains(query) ||
-                     story.title.toLowerCase().contains(query) ||
-                     (story.translatedAuthor ?? story.author).toLowerCase().contains(query) ||
-                     story.author.toLowerCase().contains(query) ||
-                     (story.translatedDescription ?? story.description).toLowerCase().contains(query) ||
-                     story.description.toLowerCase().contains(query) ||
-                     [...(story.translatedGenres ?? []), ...story.genres].any((genre) => genre.toLowerCase().contains(query));
+            matches =
+                (story.translatedTitle ?? story.title).toLowerCase().contains(
+                  query,
+                ) ||
+                story.title.toLowerCase().contains(query) ||
+                (story.translatedAuthor ?? story.author).toLowerCase().contains(
+                  query,
+                ) ||
+                story.author.toLowerCase().contains(query) ||
+                (story.translatedDescription ?? story.description)
+                    .toLowerCase()
+                    .contains(query) ||
+                story.description.toLowerCase().contains(query) ||
+                [
+                  ...(story.translatedGenres ?? []),
+                  ...story.genres,
+                ].any((genre) => genre.toLowerCase().contains(query));
             break;
         }
 
@@ -448,21 +553,25 @@ class AiChatService {
       // Sắp xếp theo độ liên quan (có thể cải thiện thuật toán sau)
       matchedStories.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
-      final searchResults = matchedStories.map((story) => {
-        'id': story.id,
-        'title': story.translatedTitle ?? story.title,
-        'originalTitle': story.title,
-        'author': story.translatedAuthor ?? story.author,
-        'originalAuthor': story.author,
-        'description': story.translatedDescription ?? story.description,
-        'genres': story.translatedGenres ?? story.genres,
-        'status': story.status,
-        'totalChapters': story.totalChapters,
-        'readChapters': story.readChapters,
-        'rating': story.rating,
-        'isFavorite': story.isFavorite,
-        'isTranslated': story.isTranslated,
-      }).toList();
+      final searchResults = matchedStories
+          .map(
+            (story) => {
+              'id': story.id,
+              'title': story.translatedTitle ?? story.title,
+              'originalTitle': story.title,
+              'author': story.translatedAuthor ?? story.author,
+              'originalAuthor': story.author,
+              'description': story.translatedDescription ?? story.description,
+              'genres': story.translatedGenres ?? story.genres,
+              'status': story.status,
+              'totalChapters': story.totalChapters,
+              'readChapters': story.readChapters,
+              'rating': story.rating,
+              'isFavorite': story.isFavorite,
+              'isTranslated': story.isTranslated,
+            },
+          )
+          .toList();
 
       return {
         'success': true,
@@ -471,27 +580,38 @@ class AiChatService {
           'total': searchResults.length,
           'query': query,
           'searchIn': searchIn,
-        }
+        },
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Lỗi khi tìm kiếm truyện: $e'
-      };
+      return {'success': false, 'error': 'Lỗi khi tìm kiếm truyện: $e'};
     }
   }
 
   // Lấy danh sách chương
-  Future<Map<String, dynamic>> _getChapterList(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _getChapterList(
+    Map<String, dynamic> args,
+  ) async {
     try {
-      final String storyId = args['storyId'];
-      final int limit = args['limit'] ?? 50;
+      // Validation tham số
+      final String? storyIdArg = args['storyId'];
+      if (storyIdArg == null || storyIdArg.isEmpty) {
+        return {
+          'success': false,
+          'error':
+              'Thiếu storyId. Vui lòng sử dụng ID từ getStoryList hoặc searchStories.',
+        };
+      }
+
+      final String storyId = storyIdArg;
+      int limit = args['limit'] ?? 50;
+      if (limit < 1) limit = 1;
+      if (limit > 200) limit = 200;
 
       final Story? story = _libraryService!.getStoryById(storyId);
       if (story == null) {
         return {
           'success': false,
-          'error': 'Không tìm thấy truyện với ID: $storyId'
+          'error': 'Không tìm thấy truyện với ID: $storyId',
         };
       }
 
@@ -502,22 +622,26 @@ class AiChatService {
         chapters = chapters.take(limit).toList();
       }
 
-      final chapterList = chapters.map((chapter) => {
-        'id': chapter.id,
-        'title': chapter.translatedTitle ?? chapter.title,
-        'originalTitle': chapter.title,
-        'chapterNumber': chapter.chapterNumber,
-        'volumeNumber': chapter.volumeNumber,
-        'volumeTitle': chapter.volumeTitle,
-        'url': chapter.url,
-        'publishedAt': chapter.publishedAt.toIso8601String(),
-        'isRead': chapter.isRead,
-        'wordCount': chapter.wordCount,
-        'hasImages': chapter.hasImages,
-        'hasContent': chapter.content.isNotEmpty,
-        'isTranslated': chapter.isTranslated,
-        'translatedAt': chapter.translatedAt?.toIso8601String(),
-      }).toList();
+      final chapterList = chapters
+          .map(
+            (chapter) => {
+              'id': chapter.id,
+              'title': chapter.translatedTitle ?? chapter.title,
+              'originalTitle': chapter.title,
+              'chapterNumber': chapter.chapterNumber,
+              'volumeNumber': chapter.volumeNumber,
+              'volumeTitle': chapter.volumeTitle,
+              'url': chapter.url,
+              'publishedAt': chapter.publishedAt.toIso8601String(),
+              'isRead': chapter.isRead,
+              'wordCount': chapter.wordCount,
+              'hasImages': chapter.hasImages,
+              'hasContent': chapter.content.isNotEmpty,
+              'isTranslated': chapter.isTranslated,
+              'translatedAt': chapter.translatedAt?.toIso8601String(),
+            },
+          )
+          .toList();
 
       return {
         'success': true,
@@ -527,26 +651,40 @@ class AiChatService {
           'chapters': chapterList,
           'total': chapterList.length,
           'totalInDatabase': chapters.length,
-        }
+          'message': chapterList.isEmpty
+              ? 'Truyện này chưa có chương nào trong database.'
+              : 'Đã tìm thấy ${chapterList.length} chương. Sử dụng field "id" để gọi getChapterContent.',
+          'usage': chapterList.isNotEmpty
+              ? 'Ví dụ: getChapterContent(chapterId: "${chapterList.first['id']}")'
+              : null,
+        },
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Lỗi khi lấy danh sách chương: $e'
-      };
+      return {'success': false, 'error': 'Lỗi khi lấy danh sách chương: $e'};
     }
   }
 
   // Lấy nội dung chương
-  Future<Map<String, dynamic>> _getChapterContent(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _getChapterContent(
+    Map<String, dynamic> args,
+  ) async {
     try {
-      final String chapterId = args['chapterId'];
+      // Validation tham số
+      final String? chapterIdArg = args['chapterId'];
+      if (chapterIdArg == null || chapterIdArg.isEmpty) {
+        return {
+          'success': false,
+          'error': 'Thiếu chapterId. Vui lòng sử dụng ID từ getChapterList.',
+        };
+      }
+
+      final String chapterId = chapterIdArg;
       final Chapter? chapter = _chapterService!.getChapterById(chapterId);
 
       if (chapter == null) {
         return {
           'success': false,
-          'error': 'Không tìm thấy chương với ID: $chapterId'
+          'error': 'Không tìm thấy chương với ID: $chapterId',
         };
       }
 
@@ -573,13 +711,10 @@ class AiChatService {
           'isTranslated': chapter.isTranslated,
           'translatedAt': chapter.translatedAt?.toIso8601String(),
           'metadata': chapter.metadata,
-        }
+        },
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Lỗi khi lấy nội dung chương: $e'
-      };
+      return {'success': false, 'error': 'Lỗi khi lấy nội dung chương: $e'};
     }
   }
 
@@ -665,12 +800,14 @@ class AiChatService {
 
     // Cập nhật conversation
     final updatedConversation = conversation.copyWith(
-      messageIds: List<String>.from(conversation.messageIds)..add(userMessageId),
+      messageIds: List<String>.from(conversation.messageIds)
+        ..add(userMessageId),
       messageCount: conversation.messageCount + 1,
       updatedAt: DateTime.now(),
     );
 
-    if (updatedConversation.title == 'Cuộc trò chuyện mới' && content.isNotEmpty) {
+    if (updatedConversation.title == 'Cuộc trò chuyện mới' &&
+        content.isNotEmpty) {
       updatedConversation.title = content.length > 50
           ? '${content.substring(0, 50)}...'
           : content;
@@ -699,6 +836,14 @@ class AiChatService {
         for (final functionCall in functionCalls) {
           final functionResult = await _handleFunctionCall(functionCall);
 
+          // Kiểm tra nếu function call bị lỗi
+          if (functionResult['success'] == false) {
+            final errorMessage =
+                functionResult['error'] ??
+                'Có lỗi xảy ra khi thực hiện function call';
+            throw Exception('Function call error: $errorMessage');
+          }
+
           // Gửi kết quả function call trở lại model
           response = await chat.sendMessage(
             Content.functionResponse(functionCall.name, functionResult),
@@ -725,7 +870,8 @@ class AiChatService {
 
       // Cập nhật conversation với AI message
       final finalConversation = updatedConversation.copyWith(
-        messageIds: List<String>.from(updatedConversation.messageIds)..add(aiMessageId),
+        messageIds: List<String>.from(updatedConversation.messageIds)
+          ..add(aiMessageId),
         messageCount: updatedConversation.messageCount + 1,
         updatedAt: DateTime.now(),
         lastMessagePreview: responseText.length > 100
@@ -737,21 +883,45 @@ class AiChatService {
 
       return aiMessage;
     } catch (e) {
-      // Tạo error message
+      print('❌ Error in sendMessage: $e');
+
+      // Tạo error message với thông tin chi tiết hơn
       final errorMessageId =
           '${conversationId}_${DateTime.now().millisecondsSinceEpoch + 1}';
+
+      String errorContent;
+      if (e.toString().contains('Function call error:')) {
+        errorContent =
+            '❌ ${e.toString().replaceFirst('Exception: Function call error: ', '')}';
+      } else {
+        errorContent =
+            '❌ Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn.\n\nChi tiết lỗi: $e';
+      }
+
       final errorMessage = ChatMessage.assistant(
         id: errorMessageId,
         conversationId: conversationId,
-        content: 'Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn.',
+        content: errorContent,
         status: ChatMessageStatus.failed,
         metadata: {'error': e.toString()},
       );
 
       await _messagesBox?.put(errorMessageId, errorMessage);
-      conversation.addMessageId(errorMessageId);
 
-      throw Exception('Lỗi khi gửi message: $e');
+      // Cập nhật conversation với error message
+      final finalConversation = updatedConversation.copyWith(
+        messageIds: List<String>.from(updatedConversation.messageIds)
+          ..add(errorMessageId),
+        messageCount: updatedConversation.messageCount + 1,
+        updatedAt: DateTime.now(),
+        lastMessagePreview: errorContent.length > 100
+            ? '${errorContent.substring(0, 100)}...'
+            : errorContent,
+      );
+
+      await _conversationsBox?.put(conversationId, finalConversation);
+
+      return errorMessage;
     }
   }
 
@@ -785,12 +955,14 @@ class AiChatService {
 
     // Cập nhật conversation với user message
     final updatedConversation = conversation.copyWith(
-      messageIds: List<String>.from(conversation.messageIds)..add(userMessageId),
+      messageIds: List<String>.from(conversation.messageIds)
+        ..add(userMessageId),
       messageCount: conversation.messageCount + 1,
       updatedAt: DateTime.now(),
     );
 
-    if (updatedConversation.title == 'Cuộc trò chuyện mới' && content.isNotEmpty) {
+    if (updatedConversation.title == 'Cuộc trò chuyện mới' &&
+        content.isNotEmpty) {
       updatedConversation.title = content.length > 50
           ? '${content.substring(0, 50)}...'
           : content;
@@ -821,6 +993,42 @@ class AiChatService {
           print('🔧 Processing function call: ${functionCall.name}');
           final functionResult = await _handleFunctionCall(functionCall);
 
+          // Kiểm tra nếu function call bị lỗi
+          if (functionResult['success'] == false) {
+            final errorMessage =
+                functionResult['error'] ??
+                'Có lỗi xảy ra khi thực hiện function call';
+            yield '❌ Lỗi: $errorMessage\n\n';
+
+            // Lưu error message
+            final settings = _aiSettingsService!.getCurrentSettings();
+            final aiMessageId =
+                '${conversationId}_${DateTime.now().millisecondsSinceEpoch + 1}';
+            final errorContent =
+                '🔍 Đang tìm kiếm thông tin...\n\n❌ Lỗi: $errorMessage';
+            final aiMessage = ChatMessage.assistant(
+              id: aiMessageId,
+              conversationId: conversationId,
+              content: errorContent,
+              isMarkdown: settings.enableMarkdown,
+              status: ChatMessageStatus.failed,
+            );
+
+            await _messagesBox?.put(aiMessageId, aiMessage);
+
+            // Cập nhật conversation
+            final finalConversation = updatedConversation.copyWith(
+              messageIds: List<String>.from(updatedConversation.messageIds)
+                ..add(aiMessageId),
+              messageCount: updatedConversation.messageCount + 1,
+              updatedAt: DateTime.now(),
+              lastMessagePreview: errorMessage,
+            );
+
+            await _conversationsBox?.put(conversationId, finalConversation);
+            return;
+          }
+
           // Gửi kết quả function call trở lại model
           response = await chat.sendMessage(
             Content.functionResponse(functionCall.name, functionResult),
@@ -843,6 +1051,16 @@ class AiChatService {
             // Xử lý thêm function calls nếu có
             for (final functionCall in additionalFunctionCalls) {
               final functionResult = await _handleFunctionCall(functionCall);
+
+              // Kiểm tra lỗi trong additional function calls
+              if (functionResult['success'] == false) {
+                final errorMessage =
+                    functionResult['error'] ??
+                    'Có lỗi xảy ra khi thực hiện function call bổ sung';
+                yield '❌ Lỗi: $errorMessage';
+                return;
+              }
+
               response = await chat.sendMessage(
                 Content.functionResponse(functionCall.name, functionResult),
               );
@@ -851,10 +1069,10 @@ class AiChatService {
             if (additionalResponseText.isNotEmpty) {
               yield additionalResponseText;
             } else {
-              yield 'Đã tìm kiếm thông tin thành công. Vui lòng hỏi tôi về thông tin bạn cần biết.';
+              yield '⚠️ Đã tìm kiếm thông tin thành công nhưng AI không tạo được phản hồi. Vui lòng thử hỏi lại với câu hỏi cụ thể hơn.';
             }
           } else {
-            yield 'Đã tìm kiếm thông tin thành công. Vui lòng hỏi tôi về thông tin bạn cần biết.';
+            yield '⚠️ Đã tìm kiếm thông tin thành công nhưng AI không tạo được phản hồi. Vui lòng thử hỏi lại với câu hỏi cụ thể hơn.';
           }
         }
 
@@ -862,8 +1080,11 @@ class AiChatService {
         final settings = _aiSettingsService!.getCurrentSettings();
         final aiMessageId =
             '${conversationId}_${DateTime.now().millisecondsSinceEpoch + 1}';
-        final actualResponseText = response.text ?? 'Đã tìm kiếm thông tin thành công. Vui lòng hỏi tôi về thông tin bạn cần biết.';
-        final fullContent = '🔍 Đang tìm kiếm thông tin...\n\n' + actualResponseText;
+        final actualResponseText =
+            response.text ??
+            'Đã tìm kiếm thông tin thành công. Vui lòng hỏi tôi về thông tin bạn cần biết.';
+        final fullContent =
+            '🔍 Đang tìm kiếm thông tin...\n\n' + actualResponseText;
         final aiMessage = ChatMessage.assistant(
           id: aiMessageId,
           conversationId: conversationId,
@@ -876,7 +1097,8 @@ class AiChatService {
 
         // Cập nhật conversation với AI message
         final finalConversation = updatedConversation.copyWith(
-          messageIds: List<String>.from(updatedConversation.messageIds)..add(aiMessageId),
+          messageIds: List<String>.from(updatedConversation.messageIds)
+            ..add(aiMessageId),
           messageCount: updatedConversation.messageCount + 1,
           updatedAt: DateTime.now(),
           lastMessagePreview: actualResponseText.length > 100
@@ -913,7 +1135,8 @@ class AiChatService {
 
         // Cập nhật conversation với AI message
         final finalConversation = updatedConversation.copyWith(
-          messageIds: List<String>.from(updatedConversation.messageIds)..add(aiMessageId),
+          messageIds: List<String>.from(updatedConversation.messageIds)
+            ..add(aiMessageId),
           messageCount: updatedConversation.messageCount + 1,
           updatedAt: DateTime.now(),
           lastMessagePreview: fullResponse.length > 100
@@ -924,8 +1147,43 @@ class AiChatService {
         await _conversationsBox?.put(conversationId, finalConversation);
       }
     } catch (e) {
-      yield 'Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn.';
-      throw Exception('Lỗi khi stream message: $e');
+      print('❌ Error in sendMessageStream: $e');
+      final errorMessage =
+          '❌ Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn.\n\nChi tiết lỗi: $e';
+      yield errorMessage;
+
+      // Lưu error message
+      try {
+        final settings = _aiSettingsService!.getCurrentSettings();
+        final aiMessageId =
+            '${conversationId}_${DateTime.now().millisecondsSinceEpoch + 1}';
+        final aiMessage = ChatMessage.assistant(
+          id: aiMessageId,
+          conversationId: conversationId,
+          content: errorMessage,
+          isMarkdown: settings.enableMarkdown,
+          status: ChatMessageStatus.failed,
+          metadata: {'error': e.toString()},
+        );
+
+        await _messagesBox?.put(aiMessageId, aiMessage);
+
+        // Cập nhật conversation
+        final conversation = getConversation(conversationId);
+        if (conversation != null) {
+          final finalConversation = conversation.copyWith(
+            messageIds: List<String>.from(conversation.messageIds)
+              ..add(aiMessageId),
+            messageCount: conversation.messageCount + 1,
+            updatedAt: DateTime.now(),
+            lastMessagePreview: 'Lỗi: ${e.toString()}',
+          );
+
+          await _conversationsBox?.put(conversationId, finalConversation);
+        }
+      } catch (saveError) {
+        print('❌ Error saving error message: $saveError');
+      }
     }
   }
 
