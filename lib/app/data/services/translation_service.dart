@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:firebase_ai/firebase_ai.dart';
-import 'package:get/get.dart';
 import 'firebase_config_service.dart';
 
 class TranslationService {
@@ -13,26 +12,118 @@ class TranslationService {
   bool _isInitialized = false;
   final FirebaseConfigService _configService = FirebaseConfigService();
 
+  // Define JSON schema for structured translation output
+  static final _translationSchema = Schema.object(
+    properties: {
+      'title': Schema.string(),
+      'author': Schema.string(),
+      'description': Schema.string(),
+      'genres': Schema.array(items: Schema.string()),
+      'success': Schema.boolean(),
+      'message': Schema.string(),
+    },
+    optionalProperties: ['message'],
+  );
+
   // Initialize the service
   Future<void> init() async {
     try {
       // Initialize config service first
       await _configService.init();
 
-      // Initialize the Gemini Developer API backend service
-      _model = FirebaseAI.googleAI().generativeModel(model: 'gemini-2.5-flash');
+      // Configure safety settings to allow all content for translation
+      final safetySettings = [
+        SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none, null),
+        SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none, null),
+        SafetySetting(
+          HarmCategory.sexuallyExplicit,
+          HarmBlockThreshold.none,
+          null,
+        ),
+        SafetySetting(
+          HarmCategory.dangerousContent,
+          HarmBlockThreshold.none,
+          null,
+        ),
+      ];
+
+      // Initialize the Gemini Developer API backend service with structured output
+      _model = FirebaseAI.googleAI().generativeModel(
+        model: 'gemini-2.5-flash',
+        systemInstruction: Content.system(_getSystemInstruction()),
+        safetySettings: safetySettings,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          responseSchema: _translationSchema,
+          temperature:
+              0.2, // Very low temperature for consistent, deterministic translations
+          topP: 0.8, // Focus on high-probability tokens for accuracy
+          topK: 40, // Limit vocabulary for more focused translations
+          maxOutputTokens: 2048,
+          frequencyPenalty: 0.1, // Slight penalty to avoid repetition
+          presencePenalty: 0.1, // Encourage diverse vocabulary
+        ),
+      );
       _isInitialized = true;
-      print('✅ Translation Service initialized successfully with API key: ${_configService.apiKey.substring(0, 20)}...');
+      print(
+        '✅ Translation Service initialized successfully with structured output and safety settings disabled',
+      );
     } catch (e) {
       print('❌ Error initializing Translation Service: $e');
       _isInitialized = false;
     }
   }
 
+  // Get system instruction for translation
+  String _getSystemInstruction() {
+    return '''
+Bạn là một chuyên gia dịch thuật chuyên nghiệp với 10+ năm kinh nghiệm dịch light novel và web novel từ tiếng Nhật sang tiếng Việt.
+
+CHUYÊN MÔN:
+- Thành thạo cả tiếng Nhật và tiếng Việt ở mức độ bản ngữ
+- Hiểu sâu văn hóa và ngôn ngữ của cả hai nước
+- Chuyên gia về các thể loại: isekai, romance, fantasy, slice of life, comedy, drama
+- Nắm vững thuật ngữ và cách diễn đạt trong cộng đồng đọc truyện Việt Nam
+
+NGUYÊN TẮC DỊCH:
+1. TIÊU ĐỀ:
+   - Dịch hấp dẫn, catchy, dễ nhớ
+   - Giữ nguyên ý nghĩa nhưng có thể điều chỉnh để phù hợp văn hóa Việt
+   - Có thể thêm phụ đề hoặc ghi chú làm rõ nội dung
+   - Tránh dịch quá dài hoặc khó hiểu
+
+2. TÁC GIẢ:
+   - Giữ nguyên tên tiếng Nhật (romanized)
+   - Không dịch tên riêng của tác giả
+
+3. MÔ TẢ:
+   - Dịch tự nhiên, mượt mà như người Việt viết
+   - Sử dụng từ ngữ phù hợp với độ tuổi và thể loại
+   - Giữ nguyên tone và cảm xúc của bản gốc
+   - Tránh từ ngữ cứng nhắc, dịch máy
+
+4. THỂ LOẠI:
+   - Sử dụng thuật ngữ chuẩn trong cộng đồng: "Isekai", "Romance", "Harem", "Slice of Life"
+   - Dịch các thể loại phổ biến: "学園" → "Học đường", "恋愛" → "Romance"
+   - Giữ nguyên các thuật ngữ đã được cộng đồng chấp nhận
+
+CHẤT LƯỢNG:
+- Ưu tiên độ tự nhiên và dễ đọc
+- Đảm bảo bản dịch không mất ý nghĩa gốc
+- Sử dụng ngôn ngữ phù hợp với từng thể loại truyện
+- Tránh lặp từ không cần thiết
+
+ĐỊNH DẠNG ĐẦU RA:
+- Luôn trả về JSON hợp lệ với đầy đủ các trường
+- success: true (luôn luôn, trừ khi có lỗi nghiêm trọng)
+- Đảm bảo tất cả các trường đều có giá trị hợp lệ
+''';
+  }
+
   // Check if service is ready
   bool get isReady => _isInitialized;
 
-  // Translate story information to Vietnamese
+  // Translate story information to Vietnamese using structured output
   Future<Map<String, String>?> translateStoryInfo({
     required String title,
     required String author,
@@ -45,30 +136,30 @@ class TranslationService {
     }
 
     try {
-      // Create a comprehensive prompt for translation
-      final prompt = _buildTranslationPrompt(
+      // Create a structured prompt for translation
+      final prompt = _buildStructuredPrompt(
         title: title,
         author: author,
         description: description,
         genres: genres,
       );
 
-      print('🔄 Translating story info...');
+      print('🔄 Translating story info with structured output...');
       final response = await _model.generateContent([Content.text(prompt)]);
-      
+
       if (response.text == null) {
         print('❌ No response from translation service');
         return null;
       }
 
-      // Parse the response
-      final translatedInfo = _parseTranslationResponse(response.text!);
-      
+      // Parse the structured JSON response
+      final translatedInfo = _parseStructuredResponse(response.text!);
+
       if (translatedInfo != null) {
         print('✅ Translation completed successfully');
         return translatedInfo;
       } else {
-        print('❌ Failed to parse translation response');
+        print('❌ Failed to parse structured translation response');
         return null;
       }
     } catch (e) {
@@ -77,122 +168,135 @@ class TranslationService {
     }
   }
 
-  // Build translation prompt
-  String _buildTranslationPrompt({
+  // Build structured prompt for translation
+  String _buildStructuredPrompt({
     required String title,
     required String author,
     required String description,
     List<String> genres = const [],
   }) {
-    final genresText = genres.isNotEmpty ? '\nThể loại: ${genres.join(', ')}' : '';
-    
+    final genresText = genres.isNotEmpty
+        ? 'Thể loại: ${genres.join(', ')}'
+        : 'Không có thông tin thể loại';
+
     return '''
-Bạn là một chuyên gia dịch thuật chuyên dịch thông tin truyện từ tiếng Nhật sang tiếng Việt. 
-Hãy dịch thông tin truyện sau đây một cách chính xác và tự nhiên:
+Hãy dịch thông tin truyện sau từ tiếng Nhật sang tiếng Việt:
 
-THÔNG TIN GỐC:
-Tiêu đề: $title
-Tác giả: $author
-Mô tả: $description$genresText
+THÔNG TIN TRUYỆN GỐC:
+📖 Tiêu đề: $title
+✍️ Tác giả: $author
+📝 Mô tả: $description
+🏷️ $genresText
 
-YÊU CẦU:
-1. Dịch tiêu đề sao cho phù hợp với văn hóa Việt Nam nhưng vẫn giữ nguyên ý nghĩa
-2. Dịch tên tác giả (nếu có thể) hoặc giữ nguyên nếu là tên riêng
-3. Dịch mô tả một cách tự nhiên, dễ hiểu
-4. Dịch các thể loại nếu có
-5. Trả về kết quả theo định dạng JSON chính xác như sau:
+HƯỚNG DẪN DỊCH:
+- Tiêu đề: Dịch hấp dẫn, có thể thêm phụ đề làm rõ nội dung
+- Tác giả: Giữ nguyên tên Nhật, có thể romanize nếu cần
+- Mô tả: Dịch tự nhiên, sử dụng từ ngữ phù hợp độ tuổi
+- Thể loại: Sử dụng thuật ngữ quen thuộc trong cộng đồng
 
-{
-  "title": "Tiêu đề đã dịch",
-  "author": "Tác giả đã dịch", 
-  "description": "Mô tả đã dịch",
-  "genres": ["Thể loại 1", "Thể loại 2"]
-}
-
-CHÚ Ý: Chỉ trả về JSON, không thêm bất kỳ text nào khác.
+Đảm bảo bản dịch tự nhiên và phù hợp văn hóa Việt Nam.
 ''';
   }
 
-  // Parse translation response
-  Map<String, String>? _parseTranslationResponse(String response) {
+  // Parse structured JSON response
+  Map<String, String>? _parseStructuredResponse(String response) {
     try {
-      // Clean the response to extract JSON
-      String cleanResponse = response.trim();
-      
-      // Remove markdown code blocks if present
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.substring(7);
-      }
-      if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.substring(3);
-      }
-      if (cleanResponse.endsWith('```')) {
-        cleanResponse = cleanResponse.substring(0, cleanResponse.length - 3);
-      }
-      
-      cleanResponse = cleanResponse.trim();
-      
-      // Find JSON object
-      int startIndex = cleanResponse.indexOf('{');
-      int endIndex = cleanResponse.lastIndexOf('}');
-      
-      if (startIndex == -1 || endIndex == -1 || startIndex >= endIndex) {
-        print('❌ No valid JSON found in response');
+      print(
+        '📄 Raw response: ${response.substring(0, response.length > 200 ? 200 : response.length)}...',
+      );
+
+      // Parse JSON directly (no need to clean since it's structured output)
+      final Map<String, dynamic> parsed = jsonDecode(response);
+
+      // Check if translation was successful
+      if (parsed['success'] == false) {
+        print('❌ Translation failed: ${parsed['message'] ?? 'Unknown error'}');
         return null;
       }
-      
-      String jsonString = cleanResponse.substring(startIndex, endIndex + 1);
-      
-      // Parse JSON
-      final Map<String, dynamic> parsed = 
-          Map<String, dynamic>.from(jsonDecode(jsonString));
-      
+
+      // Validate required fields
+      if (parsed['title'] == null ||
+          parsed['author'] == null ||
+          parsed['description'] == null) {
+        print('❌ Missing required fields in translation response');
+        return null;
+      }
+
       // Convert to Map<String, String>
       final result = <String, String>{};
-      
-      if (parsed['title'] != null) {
-        result['title'] = parsed['title'].toString();
-      }
-      if (parsed['author'] != null) {
-        result['author'] = parsed['author'].toString();
-      }
-      if (parsed['description'] != null) {
-        result['description'] = parsed['description'].toString();
-      }
-      
+
+      result['title'] = parsed['title'].toString().trim();
+      result['author'] = parsed['author'].toString().trim();
+      result['description'] = parsed['description'].toString().trim();
+
       // Handle genres array
       if (parsed['genres'] != null && parsed['genres'] is List) {
         final genresList = (parsed['genres'] as List)
-            .map((e) => e.toString())
+            .map((e) => e.toString().trim())
+            .where((genre) => genre.isNotEmpty)
             .toList();
         result['genres'] = genresList.join(',');
+      } else {
+        result['genres'] = '';
       }
-      
+
+      print('✅ Parsed translation: ${result['title']}');
       return result;
     } catch (e) {
-      print('❌ Error parsing translation response: $e');
+      print('❌ Error parsing structured response: $e');
       print('Response was: $response');
       return null;
     }
   }
 
-  // Quick translate method for single text
-  Future<String?> translateText(String text, {String targetLanguage = 'Vietnamese'}) async {
+  // Quick translate method for single text (using simple text model)
+  Future<String?> translateText(
+    String text, {
+    String targetLanguage = 'Vietnamese',
+  }) async {
     if (!_isInitialized) {
       print('❌ Translation Service not initialized');
       return null;
     }
 
     try {
-      final prompt = '''
-Dịch đoạn text sau sang tiếng Việt một cách tự nhiên và chính xác:
+      // Configure safety settings for text translation
+      final safetySettings = [
+        SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none, null),
+        SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none, null),
+        SafetySetting(
+          HarmCategory.sexuallyExplicit,
+          HarmBlockThreshold.none,
+          null,
+        ),
+        SafetySetting(
+          HarmCategory.dangerousContent,
+          HarmBlockThreshold.none,
+          null,
+        ),
+      ];
 
-"$text"
+      // Create a simple model for text translation (without JSON schema)
+      final textModel = FirebaseAI.googleAI().generativeModel(
+        model: 'gemini-2.5-flash',
+        systemInstruction: Content.system(
+          'Bạn là chuyên gia dịch thuật. Dịch text từ tiếng Nhật sang tiếng Việt một cách tự nhiên và chính xác. '
+          'Chỉ trả về kết quả dịch, không thêm giải thích.',
+        ),
+        safetySettings: safetySettings,
+        generationConfig: GenerationConfig(
+          temperature: 0.2, // Low temperature for consistent translations
+          topP: 0.8, // Focus on high-probability tokens
+          topK: 40, // Limit vocabulary for focused output
+          maxOutputTokens: 1024,
+          frequencyPenalty: 0.1, // Avoid repetition
+          presencePenalty: 0.1, // Encourage vocabulary diversity
+        ),
+      );
 
-Chỉ trả về kết quả dịch, không thêm bất kỳ text nào khác.
-''';
+      final prompt = 'Dịch sang tiếng Việt: "$text"';
+      final response = await textModel.generateContent([Content.text(prompt)]);
 
-      final response = await _model.generateContent([Content.text(prompt)]);
       return response.text?.trim();
     } catch (e) {
       print('❌ Error translating text: $e');
