@@ -33,6 +33,12 @@ class SettingsView extends GetView<SettingsController> {
   Widget _buildSettingsList() {
     final settingsItems = [
       SettingsItem(
+        title: 'Giao diện',
+        subtitle: 'Tùy chỉnh giao diện sáng, tối hoặc theo hệ thống',
+        icon: Iconsax.brush_2,
+        onTap: () => Get.toNamed(Routes.THEME_SETTINGS),
+      ),
+      SettingsItem(
         title: 'Cấu hình Firebase',
         subtitle: 'Quản lý cấu hình Firebase và API keys',
         icon: Iconsax.cloud,

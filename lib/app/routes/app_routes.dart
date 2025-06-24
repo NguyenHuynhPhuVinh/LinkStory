@@ -10,6 +10,7 @@ abstract class Routes {
   static const SETTINGS = _Paths.SETTINGS;
   static const FIREBASE_SETTINGS = _Paths.FIREBASE_SETTINGS;
   static const APP_INFO = _Paths.APP_INFO;
+  static const THEME_SETTINGS = _Paths.THEME_SETTINGS;
   static const AI = _Paths.AI;
   static const WEBVIEW = _Paths.WEBVIEW;
   static const STORY_DETAIL = _Paths.STORY_DETAIL;
@@ -25,6 +26,7 @@ abstract class _Paths {
   static const SETTINGS = '/settings';
   static const FIREBASE_SETTINGS = '/settings/firebase';
   static const APP_INFO = '/settings/app-info';
+  static const THEME_SETTINGS = '/settings/theme';
   static const AI = '/ai';
   static const WEBVIEW = '/webview';
   static const STORY_DETAIL = '/story-detail';

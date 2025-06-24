@@ -13,6 +13,8 @@ import '../modules/settings/bindings/firebase_settings_binding.dart';
 import '../modules/settings/views/firebase_settings_view.dart';
 import '../modules/settings/bindings/app_info_binding.dart';
 import '../modules/settings/views/app_info_view.dart';
+import '../modules/settings/bindings/theme_settings_binding.dart';
+import '../modules/settings/views/theme_settings_view.dart';
 import '../modules/ai/bindings/ai_binding.dart';
 import '../modules/ai/views/ai_view.dart';
 import '../modules/webview/bindings/webview_binding.dart';
@@ -64,6 +66,11 @@ class AppPages {
       name: _Paths.APP_INFO,
       page: () => const AppInfoView(),
       binding: AppInfoBinding(),
+    ),
+    GetPage(
+      name: _Paths.THEME_SETTINGS,
+      page: () => const ThemeSettingsView(),
+      binding: ThemeSettingsBinding(),
     ),
     GetPage(name: _Paths.AI, page: () => const AiView(), binding: AiBinding()),
     GetPage(

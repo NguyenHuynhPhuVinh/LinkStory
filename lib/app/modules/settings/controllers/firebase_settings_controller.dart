@@ -126,30 +126,6 @@ class FirebaseSettingsController extends GetxController {
               _buildDetailRow('Project ID', projectId),
               _buildDetailRow('API Key', apiKey.isNotEmpty ? '${apiKey.substring(0, 10)}...' : 'Không có'),
               _buildDetailRow('Trạng thái', isConfigured ? 'Đã cấu hình' : 'Chưa cấu hình'),
-              if (isConfigured) ...[
-                const SizedBox(height: 16),
-                const Text(
-                  'Thông tin cấu hình:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Project ID: ${exportedConfig['project_id']}\n'
-                    'API Key: ${exportedConfig['api_key']?.substring(0, 10)}...\n'
-                    'Cấu hình lúc: ${exportedConfig['configured_at']}',
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

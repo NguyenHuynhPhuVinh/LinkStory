@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'app/routes/app_pages.dart';
 import 'app/data/models/website_model.dart';
 import 'app/data/models/story_model.dart';
+import 'app/data/services/theme_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -28,6 +29,10 @@ void main() async {
     Hive.registerAdapter(StoryAdapter());
   }
 
+  // Initialize Theme Service
+  Get.put(ThemeService(), permanent: true);
+  await Get.find<ThemeService>().onInit();
+
   runApp(const LinkStoryApp());
 }
 
@@ -41,34 +46,15 @@ class LinkStoryApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return GetMaterialApp(
+        return Obx(() => GetMaterialApp(
           title: 'LinkStory',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
-              brightness: Brightness.light,
-            ),
-            useMaterial3: true,
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
-          ),
+          theme: ThemeService.lightTheme,
+          darkTheme: ThemeService.darkTheme,
+          themeMode: ThemeService.to.themeMode.value,
           initialRoute: AppPages.INITIAL,
           getPages: AppPages.routes,
           debugShowCheckedModeBanner: false,
-        );
+        ));
       },
     );
   }
