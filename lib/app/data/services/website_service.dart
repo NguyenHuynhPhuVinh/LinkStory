@@ -36,8 +36,8 @@ class WebsiteService {
       Website(
         id: 'syosetu',
         name: 'Syosetu',
-        url: 'https://syosetu.com/',
-        iconUrl: 'https://syosetu.com/favicon.ico',
+        url: 'https://ncode.syosetu.com/',
+        iconUrl: 'https://ncode.syosetu.com/favicon.ico',
         description: 'Website light novel Nhật Bản',
       ),
     ];

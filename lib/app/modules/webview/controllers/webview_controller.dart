@@ -84,13 +84,14 @@ class WebViewController extends GetxController {
             update();
           },
           onWebResourceError: (webview_flutter.WebResourceError error) {
-            Get.snackbar(
-              'Lỗi tải trang',
-              'Không thể tải trang: ${error.description}',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.red.withOpacity(0.8),
-              colorText: Colors.white,
+            // Log lỗi để debug nhưng không hiển thị popup
+            print(
+              'WebResourceError: ${error.errorType} - ${error.description} - ${error.url}',
             );
+
+            // Không hiển thị bất kỳ popup lỗi nào để tránh làm phiền người dùng
+            // Các lỗi CORS, quảng cáo, tracking là bình thường với các website
+            // Chỉ log để developer có thể debug nếu cần
           },
           onNavigationRequest: (webview_flutter.NavigationRequest request) {
             // Allow all navigation
@@ -147,10 +148,7 @@ class WebViewController extends GetxController {
   // Share functionality
   Future<void> shareCurrentPage() async {
     try {
-      await Share.share(
-        '$pageTitle\n$currentUrl',
-        subject: pageTitle,
-      );
+      await Share.share('$pageTitle\n$currentUrl', subject: pageTitle);
     } catch (e) {
       Get.snackbar(
         'Lỗi',
@@ -178,12 +176,14 @@ class WebViewController extends GetxController {
 
   // Translation functionality
   void translatePage() {
-    final translateUrl = 'https://translate.google.com/translate?sl=auto&tl=vi&u=${Uri.encodeComponent(currentUrl)}';
+    final translateUrl =
+        'https://translate.google.com/translate?sl=auto&tl=vi&u=${Uri.encodeComponent(currentUrl)}';
     webViewController.loadRequest(Uri.parse(translateUrl));
   }
 
   void translateToLanguage(String languageCode) {
-    final translateUrl = 'https://translate.google.com/translate?sl=auto&tl=$languageCode&u=${Uri.encodeComponent(currentUrl)}';
+    final translateUrl =
+        'https://translate.google.com/translate?sl=auto&tl=$languageCode&u=${Uri.encodeComponent(currentUrl)}';
     webViewController.loadRequest(Uri.parse(translateUrl));
     showTranslateMenu = false;
     update();
@@ -282,7 +282,7 @@ class WebViewController extends GetxController {
 
       final result = await _webViewScraperService.scrapeStoryWithChapters(
         currentUrl,
-        scrapeContent: false // Không tải nội dung từng chương
+        scrapeContent: false, // Không tải nội dung từng chương
       );
 
       if (result != null) {
@@ -340,8 +340,6 @@ class WebViewController extends GetxController {
       update();
     }
   }
-
-
 
   // Xem truyện trong thư viện
   void viewInLibrary() {
