@@ -19,8 +19,8 @@ class ChatConversationAdapter extends TypeAdapter<ChatConversation> {
     return ChatConversation(
       id: fields[0] as String,
       title: fields[1] as String,
-      createdAt: fields[2] as DateTime,
-      updatedAt: fields[3] as DateTime,
+      createdAt: fields[2] as DateTime?,
+      updatedAt: fields[3] as DateTime?,
       messageIds: (fields[4] as List).cast<String>(),
       metadata: (fields[5] as Map).cast<String, dynamic>(),
       systemPrompt: fields[6] as String?,

@@ -19,7 +19,7 @@ class ChatHistoryView extends GetView<AiController> {
         children: [
           // Search and filter
           _buildSearchAndFilter(),
-          
+
           // History list
           Expanded(
             child: Obx(() {
@@ -29,6 +29,10 @@ class ChatHistoryView extends GetView<AiController> {
 
               if (controller.conversations.isEmpty) {
                 return _buildEmptyView();
+              }
+
+              if (controller.filteredConversations.isEmpty) {
+                return _buildNoResultsView();
               }
 
               return _buildHistoryList();
@@ -48,11 +52,20 @@ class ChatHistoryView extends GetView<AiController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Obx(() => Text(
-        controller.conversations.isEmpty
-          ? 'Lịch sử trò chuyện'
-          : 'Lịch sử (${controller.conversations.length})'
-      )),
+      title: Obx(() {
+        if (controller.conversations.isEmpty) {
+          return const Text('Lịch sử trò chuyện');
+        }
+
+        if (controller.searchQuery.value.isNotEmpty ||
+            controller.selectedFilter.value != 'all') {
+          return Text(
+            'Lịch sử (${controller.filteredConversations.length}/${controller.conversations.length})',
+          );
+        }
+
+        return Text('Lịch sử (${controller.conversations.length})');
+      }),
       centerTitle: true,
       actions: [
         PopupMenuButton<String>(
@@ -90,34 +103,34 @@ class ChatHistoryView extends GetView<AiController> {
   Widget _buildSearchAndFilter() {
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(Get.context!).dividerColor,
-            width: 1,
-          ),
-        ),
-      ),
       child: Column(
         children: [
           // Search bar
           TextField(
+            controller: controller.searchController,
+            onChanged: controller.searchConversations,
             decoration: InputDecoration(
               hintText: 'Tìm kiếm cuộc trò chuyện...',
               prefixIcon: const Icon(Iconsax.search_normal),
+              suffixIcon: Obx(
+                () => controller.searchQuery.value.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Iconsax.close_circle),
+                        onPressed: controller.clearSearch,
+                      )
+                    : const SizedBox.shrink(),
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Theme.of(Get.context!).colorScheme.surface,
             ),
-            onChanged: (value) {
-              // TODO: Implement search functionality
-            },
           ),
-          
+
           SizedBox(height: 12.h),
-          
+
           // Filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -136,70 +149,98 @@ class ChatHistoryView extends GetView<AiController> {
     );
   }
 
-  Widget _buildFilterChip(String key, String label, IconData icon) {
-    return GFButton(
-      onPressed: () {
-        // TODO: Implement filter functionality
-      },
-      text: label,
-      icon: Icon(icon, size: 16.sp),
-      type: GFButtonType.outline,
-      shape: GFButtonShape.pills,
-      size: GFSize.SMALL,
-    );
+  Widget _buildFilterChip(String value, String label, IconData icon) {
+    return Obx(() {
+      final isSelected = controller.selectedFilter.value == value;
+      return GFButton(
+        onPressed: () => controller.setFilter(value),
+        text: label,
+        icon: Icon(
+          icon,
+          size: 16.sp,
+          color: isSelected
+              ? Colors.white
+              : Theme.of(Get.context!).colorScheme.primary,
+        ),
+        type: isSelected ? GFButtonType.solid : GFButtonType.outline,
+        color: Theme.of(Get.context!).colorScheme.primary,
+        size: GFSize.SMALL,
+        shape: GFButtonShape.pills,
+      );
+    });
   }
 
   Widget _buildLoadingView() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildEmptyView() {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Iconsax.message,
-              size: 80.sp,
-              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.3),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Iconsax.message, size: 64.sp, color: Colors.grey),
+          SizedBox(height: 16.h),
+          Text(
+            'Chưa có cuộc trò chuyện nào',
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
-            SizedBox(height: 24.h),
-            Text(
-              'Chưa có cuộc trò chuyện nào',
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.7),
-              ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Bắt đầu cuộc trò chuyện đầu tiên với AI để xem lịch sử tại đây',
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16.h),
+          GFButton(
+            onPressed: () {
+              controller.createNewConversation();
+              Get.back();
+            },
+            text: 'Tạo cuộc trò chuyện mới',
+            type: GFButtonType.outline,
+            shape: GFButtonShape.pills,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResultsView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Iconsax.search_normal, size: 64.sp, color: Colors.grey),
+          SizedBox(height: 16.h),
+          Text(
+            'Không tìm thấy kết quả',
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
-            SizedBox(height: 12.h),
-            Text(
-              'Bắt đầu cuộc trò chuyện đầu tiên với AI để xem lịch sử tại đây',
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
-              ),
+          ),
+          SizedBox(height: 8.h),
+          Obx(
+            () => Text(
+              'Không có cuộc trò chuyện nào phù hợp với "${controller.searchQuery.value}"',
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 32.h),
-            GFButton(
-              onPressed: () {
-                controller.createNewConversation();
-                Get.back();
-              },
-              text: 'Tạo cuộc trò chuyện mới',
-              icon: Icon(Iconsax.message_add, size: 18.sp),
-              type: GFButtonType.solid,
-              shape: GFButtonShape.pills,
-              size: GFSize.LARGE,
-              fullWidthButton: true,
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: 16.h),
+          GFButton(
+            onPressed: controller.clearSearch,
+            text: 'Xóa bộ lọc',
+            type: GFButtonType.outline,
+            shape: GFButtonShape.pills,
+          ),
+        ],
       ),
     );
   }
@@ -213,9 +254,9 @@ class ChatHistoryView extends GetView<AiController> {
       backgroundColor: Theme.of(Get.context!).scaffoldBackgroundColor,
       child: ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        itemCount: controller.conversations.length,
+        itemCount: controller.filteredConversations.length,
         itemBuilder: (context, index) {
-          final conversation = controller.conversations[index];
+          final conversation = controller.filteredConversations[index];
           return _buildHistoryCard(conversation);
         },
       ),
@@ -226,9 +267,7 @@ class ChatHistoryView extends GetView<AiController> {
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: InkWell(
         onTap: () => _continueConversation(conversation),
         borderRadius: BorderRadius.circular(12.r),
@@ -247,9 +286,9 @@ class ChatHistoryView extends GetView<AiController> {
                   size: 20.sp,
                 ),
               ),
-              
+
               SizedBox(width: 16.w),
-              
+
               // Content
               Expanded(
                 child: Column(
@@ -266,50 +305,60 @@ class ChatHistoryView extends GetView<AiController> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     if (conversation.lastMessagePreview != null) ...[
                       SizedBox(height: 4.h),
                       Text(
                         conversation.lastMessagePreview!,
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(
+                            Get.context!,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    
+
                     SizedBox(height: 8.h),
-                    
+
                     // Stats
                     Row(
                       children: [
                         Icon(
                           Iconsax.message,
                           size: 14.sp,
-                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+                          color: Theme.of(
+                            Get.context!,
+                          ).colorScheme.onSurface.withOpacity(0.5),
                         ),
                         SizedBox(width: 4.w),
                         Text(
                           '${conversation.messageCount} tin nhắn',
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+                            color: Theme.of(
+                              Get.context!,
+                            ).colorScheme.onSurface.withOpacity(0.5),
                           ),
                         ),
                         SizedBox(width: 16.w),
                         Icon(
                           Iconsax.clock,
                           size: 14.sp,
-                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+                          color: Theme.of(
+                            Get.context!,
+                          ).colorScheme.onSurface.withOpacity(0.5),
                         ),
                         SizedBox(width: 4.w),
                         Text(
                           _formatDate(conversation.updatedAt),
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+                            color: Theme.of(
+                              Get.context!,
+                            ).colorScheme.onSurface.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -317,10 +366,11 @@ class ChatHistoryView extends GetView<AiController> {
                   ],
                 ),
               ),
-              
+
               // Action menu
               PopupMenuButton<String>(
-                onSelected: (value) => _handleConversationAction(value, conversation),
+                onSelected: (value) =>
+                    _handleConversationAction(value, conversation),
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'continue',
@@ -357,7 +407,9 @@ class ChatHistoryView extends GetView<AiController> {
                 child: Icon(
                   Iconsax.more,
                   size: 20.sp,
-                  color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+                  color: Theme.of(
+                    Get.context!,
+                  ).colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
             ],
@@ -430,10 +482,7 @@ class ChatHistoryView extends GetView<AiController> {
           autofocus: true,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Hủy')),
           TextButton(
             onPressed: () {
               final newTitle = textController.text.trim();
@@ -442,7 +491,9 @@ class ChatHistoryView extends GetView<AiController> {
                   title: newTitle,
                   updatedAt: DateTime.now(),
                 );
-                controller.aiChatService.updateConversation(updatedConversation);
+                controller.aiChatService.updateConversation(
+                  updatedConversation,
+                );
                 controller.loadConversations();
               }
               Get.back();
@@ -458,12 +509,11 @@ class ChatHistoryView extends GetView<AiController> {
     Get.dialog(
       AlertDialog(
         title: const Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc chắn muốn xóa cuộc trò chuyện "${conversation.title}"?\n\nHành động này không thể hoàn tác.'),
+        content: Text(
+          'Bạn có chắc chắn muốn xóa cuộc trò chuyện "${conversation.title}"?\n\nHành động này không thể hoàn tác.',
+        ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Hủy')),
           TextButton(
             onPressed: () {
               Get.back();
@@ -481,12 +531,11 @@ class ChatHistoryView extends GetView<AiController> {
     Get.dialog(
       AlertDialog(
         title: const Text('Xác nhận xóa tất cả'),
-        content: const Text('Bạn có chắc chắn muốn xóa tất cả cuộc trò chuyện?\n\nHành động này không thể hoàn tác.'),
+        content: const Text(
+          'Bạn có chắc chắn muốn xóa tất cả cuộc trò chuyện?\n\nHành động này không thể hoàn tác.',
+        ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Hủy')),
           TextButton(
             onPressed: () {
               Get.back();

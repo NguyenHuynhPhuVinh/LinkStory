@@ -33,6 +33,12 @@ class SettingsView extends GetView<SettingsController> {
   Widget _buildSettingsList() {
     final settingsItems = [
       SettingsItem(
+        title: 'AI Trợ lý',
+        subtitle: 'Cấu hình mô hình AI, system prompt và tham số',
+        icon: Iconsax.cpu,
+        onTap: () => Get.toNamed(Routes.AI_SETTINGS),
+      ),
+      SettingsItem(
         title: 'Giao diện',
         subtitle: 'Tùy chỉnh giao diện sáng, tối hoặc theo hệ thống',
         icon: Iconsax.brush_2,

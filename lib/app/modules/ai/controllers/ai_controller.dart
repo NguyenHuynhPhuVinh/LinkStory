@@ -14,15 +14,19 @@ class AiController extends GetxController {
 
   // Observable variables
   final conversations = <ChatConversation>[].obs;
+  final filteredConversations = <ChatConversation>[].obs;
   final currentConversation = Rxn<ChatConversation>();
   final messages = <ChatMessage>[].obs;
   final isLoading = false.obs;
   final isStreaming = false.obs;
   final streamingMessage = ''.obs;
   final errorMessage = ''.obs;
+  final searchQuery = ''.obs;
+  final selectedFilter = 'all'.obs;
 
   // Text controllers
   final messageController = TextEditingController();
+  final searchController = TextEditingController();
   final scrollController = ScrollController();
 
   // Stream subscription
@@ -43,6 +47,7 @@ class AiController extends GetxController {
   @override
   void onClose() {
     messageController.dispose();
+    searchController.dispose();
     scrollController.dispose();
     _streamSubscription?.cancel();
     super.onClose();
@@ -64,6 +69,7 @@ class AiController extends GetxController {
   void loadConversations() {
     try {
       conversations.value = _aiChatService.getAllConversations();
+      _applyFilters();
       print('✅ Loaded ${conversations.length} conversations');
     } catch (e) {
       print('❌ Error loading conversations: $e');
@@ -251,5 +257,57 @@ class AiController extends GetxController {
   // Clear error message
   void clearError() {
     errorMessage.value = '';
+  }
+
+  // Search conversations
+  void searchConversations(String query) {
+    searchQuery.value = query;
+    _applyFilters();
+  }
+
+  // Clear search
+  void clearSearch() {
+    searchQuery.value = '';
+    searchController.clear();
+    _applyFilters();
+  }
+
+  // Set filter
+  void setFilter(String filter) {
+    selectedFilter.value = filter;
+    _applyFilters();
+  }
+
+  // Apply filters and search
+  void _applyFilters() {
+    var filtered = conversations.toList();
+
+    // Apply search filter
+    if (searchQuery.value.isNotEmpty) {
+      filtered = filtered.where((conversation) {
+        return conversation.title.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+               (conversation.lastMessagePreview?.toLowerCase().contains(searchQuery.value.toLowerCase()) ?? false);
+      }).toList();
+    }
+
+    // Apply category filter
+    switch (selectedFilter.value) {
+      case 'recent':
+        final now = DateTime.now();
+        filtered = filtered.where((conversation) {
+          final difference = now.difference(conversation.updatedAt);
+          return difference.inDays <= 7;
+        }).toList();
+        break;
+      case 'favorites':
+        filtered = filtered.where((conversation) => conversation.isPinned).toList();
+        break;
+      case 'all':
+      default:
+        // No additional filtering
+        break;
+    }
+
+    filteredConversations.value = filtered;
   }
 }
