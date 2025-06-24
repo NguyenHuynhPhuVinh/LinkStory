@@ -41,6 +41,7 @@ class AiController extends GetxController {
   @override
   void onReady() {
     super.onReady();
+    // Load conversations immediately when screen is ready
     loadConversations();
   }
 
@@ -59,6 +60,9 @@ class AiController extends GetxController {
       _aiChatService = AiChatService();
       await _aiChatService.init();
       print('✅ AI Chat Service initialized in controller');
+
+      // Load conversations immediately after service is ready
+      loadConversations();
     } catch (e) {
       print('❌ Error initializing AI Chat Service: $e');
       errorMessage.value = 'Không thể khởi tạo dịch vụ AI Chat: $e';
@@ -91,7 +95,8 @@ class AiController extends GetxController {
         systemPrompt: systemPrompt,
       );
 
-      conversations.insert(0, conversation);
+      // Reload conversations to update UI
+      loadConversations();
       selectConversation(conversation.id);
 
       print('✅ Created new conversation: ${conversation.id}');
@@ -183,11 +188,47 @@ class AiController extends GetxController {
     }
   }
 
+  // Rename conversation
+  Future<void> renameConversation(String conversationId, String newTitle) async {
+    try {
+      final conversation = _aiChatService.getConversation(conversationId);
+      if (conversation != null) {
+        final updatedConversation = conversation.copyWith(
+          title: newTitle,
+          updatedAt: DateTime.now(),
+        );
+
+        await _aiChatService.updateConversation(updatedConversation);
+
+        // Reload conversations to update UI
+        loadConversations();
+
+        // Update current conversation if it's the one being renamed
+        if (currentConversation.value?.id == conversationId) {
+          currentConversation.value = updatedConversation;
+        }
+
+        Get.snackbar(
+          'Thành công',
+          'Đã đổi tên cuộc trò chuyện',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+
+        print('✅ Renamed conversation: $conversationId to "$newTitle"');
+      }
+    } catch (e) {
+      print('❌ Error renaming conversation: $e');
+      errorMessage.value = 'Không thể đổi tên cuộc trò chuyện: $e';
+    }
+  }
+
   // Delete conversation
   Future<void> deleteConversation(String conversationId) async {
     try {
       await _aiChatService.deleteConversation(conversationId);
-      conversations.removeWhere((c) => c.id == conversationId);
+
+      // Reload conversations to update UI
+      loadConversations();
 
       if (currentConversation.value?.id == conversationId) {
         currentConversation.value = null;
@@ -204,6 +245,30 @@ class AiController extends GetxController {
     } catch (e) {
       print('❌ Error deleting conversation: $e');
       errorMessage.value = 'Không thể xóa cuộc trò chuyện: $e';
+    }
+  }
+
+  // Clear all conversations
+  Future<void> clearAllConversations() async {
+    try {
+      await _aiChatService.clearAllData();
+
+      // Clear UI state
+      conversations.clear();
+      filteredConversations.clear();
+      currentConversation.value = null;
+      messages.clear();
+
+      Get.snackbar(
+        'Thành công',
+        'Đã xóa tất cả cuộc trò chuyện',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+
+      print('✅ Cleared all conversations');
+    } catch (e) {
+      print('❌ Error clearing all conversations: $e');
+      errorMessage.value = 'Không thể xóa tất cả cuộc trò chuyện: $e';
     }
   }
 

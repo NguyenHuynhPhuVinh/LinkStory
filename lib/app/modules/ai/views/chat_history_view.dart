@@ -487,14 +487,7 @@ class ChatHistoryView extends GetView<AiController> {
             onPressed: () {
               final newTitle = textController.text.trim();
               if (newTitle.isNotEmpty) {
-                final updatedConversation = conversation.copyWith(
-                  title: newTitle,
-                  updatedAt: DateTime.now(),
-                );
-                controller.aiChatService.updateConversation(
-                  updatedConversation,
-                );
-                controller.loadConversations();
+                controller.renameConversation(conversation.id, newTitle);
               }
               Get.back();
             },
@@ -539,13 +532,7 @@ class ChatHistoryView extends GetView<AiController> {
           TextButton(
             onPressed: () {
               Get.back();
-              controller.aiChatService.clearAllData();
-              controller.loadConversations();
-              Get.snackbar(
-                'Thành công',
-                'Đã xóa tất cả cuộc trò chuyện',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              controller.clearAllConversations();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Xóa tất cả'),

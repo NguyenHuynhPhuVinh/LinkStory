@@ -26,14 +26,22 @@ class AiView extends GetView<AiController> {
           // Messages area
           Expanded(
             child: Obx(() {
-              if (controller.currentConversation.value == null) {
+              // Nếu chưa có conversation nào trong lịch sử, hiện welcome view
+              if (controller.conversations.isEmpty) {
                 return _buildWelcomeView();
               }
-              
+
+              // Nếu có conversations nhưng chưa chọn conversation nào, hiện conversation list
+              if (controller.currentConversation.value == null) {
+                return _buildConversationListView();
+              }
+
+              // Nếu đã chọn conversation nhưng chưa có messages, hiện empty conversation
               if (controller.messages.isEmpty && !controller.isStreaming.value) {
                 return _buildEmptyConversationView();
               }
-              
+
+              // Hiện messages
               return _buildMessagesView();
             }),
           ),
@@ -58,7 +66,11 @@ class AiView extends GetView<AiController> {
       actions: [
         // History button
         IconButton(
-          onPressed: () => Get.toNamed('/ai/history'),
+          onPressed: () async {
+            await Get.toNamed('/ai/history');
+            // Reload conversations when returning from history
+            controller.loadConversations();
+          },
           icon: const Icon(Iconsax.clock),
           tooltip: 'Lịch sử trò chuyện',
         ),
@@ -230,6 +242,114 @@ class AiView extends GetView<AiController> {
       type: GFButtonType.outline,
       shape: GFButtonShape.pills,
       size: GFSize.SMALL,
+    );
+  }
+
+  Widget _buildConversationListView() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20.h),
+
+            // Header
+            Row(
+              children: [
+                Icon(
+                  Iconsax.message,
+                  size: 24.sp,
+                  color: Theme.of(Get.context!).colorScheme.primary,
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  'Cuộc trò chuyện gần đây',
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 16.h),
+
+            // New conversation button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => controller.createNewConversation(),
+                icon: Icon(Iconsax.message_add, size: 18.sp),
+                label: const Text('Tạo cuộc trò chuyện mới'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            // Conversations list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: controller.conversations.length,
+              itemBuilder: (context, index) {
+                final conversation = controller.conversations[index];
+                return Card(
+                  margin: EdgeInsets.only(bottom: 8.h),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Theme.of(Get.context!).colorScheme.primary,
+                      child: Icon(
+                        Iconsax.message,
+                        color: Theme.of(Get.context!).colorScheme.onPrimary,
+                        size: 18.sp,
+                      ),
+                    ),
+                    title: Text(
+                      conversation.title,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: conversation.lastMessagePreview != null
+                        ? Text(
+                            conversation.lastMessagePreview!,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : Text(
+                            '${conversation.messageCount} tin nhắn • ${_formatDate(conversation.updatedAt)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey,
+                            ),
+                          ),
+                    trailing: Icon(
+                      Iconsax.arrow_right_3,
+                      size: 16.sp,
+                      color: Colors.grey,
+                    ),
+                    onTap: () => controller.selectConversation(conversation.id),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -634,6 +754,23 @@ class AiView extends GetView<AiController> {
       return '${difference.inHours}h';
     } else {
       return '${dateTime.day}/${dateTime.month}';
+    }
+  }
+
+  String _formatDate(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Vừa xong';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes} phút trước';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
   }
 
