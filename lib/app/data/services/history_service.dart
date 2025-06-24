@@ -277,17 +277,32 @@ class HistoryService extends GetxService {
   List<ReadingHistory> getRecentlyReadStories({int limit = 20}) {
     final readHistory = getChapterReadHistory();
     final Map<String, ReadingHistory> uniqueStories = {};
-    
+
     for (final history in readHistory) {
-      if (!uniqueStories.containsKey(history.storyId) || 
+      if (!uniqueStories.containsKey(history.storyId) ||
           uniqueStories[history.storyId]!.readAt.isBefore(history.readAt)) {
         uniqueStories[history.storyId] = history;
       }
     }
-    
+
     final result = uniqueStories.values.toList();
     result.sort((a, b) => b.readAt.compareTo(a.readAt));
     return result.take(limit).toList();
+  }
+
+  // Lấy lịch sử gần nhất cho truyện và chương cụ thể
+  ReadingHistory? getHistoryByStoryAndChapter(String storyId, String chapterId) {
+    final entries = getAllHistory()
+        .where((history) =>
+            history.storyId == storyId &&
+            history.chapterId == chapterId)
+        .toList();
+
+    if (entries.isEmpty) return null;
+
+    // Sort by readAt descending and return the most recent
+    entries.sort((a, b) => b.readAt.compareTo(a.readAt));
+    return entries.first;
   }
 
 

@@ -81,38 +81,52 @@ class HistoryItemWidget extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8.r),
-        child: CachedNetworkImage(
-          imageUrl: history.storyCoverUrl,
-          width: 60.w,
-          height: 80.h,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            width: 60.w,
-            height: 80.h,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.r),
+        child: history.storyCoverUrl.isNotEmpty && Uri.tryParse(history.storyCoverUrl)?.hasAbsolutePath == true
+          ? CachedNetworkImage(
+              imageUrl: history.storyCoverUrl,
+              width: 60.w,
+              height: 80.h,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                width: 60.w,
+                height: 80.h,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Iconsax.book,
+                  size: 24.sp,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                width: 60.w,
+                height: 80.h,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Iconsax.book,
+                  size: 24.sp,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                ),
+              ),
+            )
+          : Container(
+              width: 60.w,
+              height: 80.h,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                Iconsax.book,
+                size: 24.sp,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ),
             ),
-            child: Icon(
-              Iconsax.book,
-              size: 24.sp,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            width: 60.w,
-            height: 80.h,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Icon(
-              Iconsax.book,
-              size: 24.sp,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -149,16 +163,49 @@ class HistoryItemWidget extends StatelessWidget {
         SizedBox(height: 4.h),
         
         // Chapter info or action
-        Text(
-          history.displaySubtitle,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w500,
+        if (history.isChapterRead && history.chapterTitle != null) ...[
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Iconsax.book_1,
+                  size: 12.sp,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                SizedBox(width: 4.w),
+                Flexible(
+                  child: Text(
+                    'Chương ${history.chapterNumber ?? ''}: ${history.chapterTitle}',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        ] else ...[
+          Text(
+            history.displaySubtitle,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
         
         SizedBox(height: 8.h),
         
@@ -171,19 +218,23 @@ class HistoryItemWidget extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
             SizedBox(width: 4.w),
-            Text(
-              history.actionDisplayText,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            Expanded(
+              child: Text(
+                history.actionDisplayText,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            SizedBox(width: 8.w),
             Text(
-              '• ${_getRelativeTime(history.readAt)}',
+              _getRelativeTime(history.readAt),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

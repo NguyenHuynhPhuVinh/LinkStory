@@ -129,7 +129,7 @@ class ReadingController extends GetxController {
 
         await loadChapterContent();
 
-        // Track reading immediately when chapter is opened
+        // Track reading immediately when chapter is opened (before marking as read)
         await _trackChapterReadNow();
 
         await markChapterAsRead();
@@ -257,9 +257,6 @@ class ReadingController extends GetxController {
 
       // Track chapter read completion
       _trackChapterContentLoaded();
-
-      // Track reading immediately when chapter is marked as read
-      await _trackChapterReadNow();
     } catch (e) {
       print('Error marking chapter as read: $e');
     }
@@ -495,7 +492,7 @@ class ReadingController extends GetxController {
     }
   }
 
-  // Track chapter read immediately
+  // Track chapter read immediately (when starting to read)
   Future<void> _trackChapterReadNow() async {
     if (story.value == null || currentChapter.value == null || _currentSessionId == null) {
       print('📚 Cannot track - missing data: story=${story.value != null}, chapter=${currentChapter.value != null}, session=${_currentSessionId != null}');
@@ -503,30 +500,42 @@ class ReadingController extends GetxController {
     }
 
     try {
-      print('📚 Tracking chapter read: ${story.value!.title} - ${currentChapter.value!.title}');
+      print('📚 Tracking chapter reading start: ${story.value!.title} - ${currentChapter.value!.title}');
 
-      // Create a simple reading history entry
-      final historyEntry = ReadingHistory(
-        id: '${story.value!.id}_${currentChapter.value!.id}_${DateTime.now().millisecondsSinceEpoch}',
-        storyId: story.value!.id,
-        storyTitle: story.value!.title,
-        storyAuthor: story.value!.author,
-        storyCoverUrl: story.value!.coverImageUrl,
-        chapterId: currentChapter.value!.id,
-        chapterTitle: currentChapter.value!.title,
-        chapterNumber: currentChapter.value!.chapterNumber,
-        action: ReadingAction.read,
-        sourceWebsite: story.value!.sourceWebsite,
-        sessionId: _currentSessionId!,
-        readingDuration: _sessionStartTime != null
-            ? DateTime.now().difference(_sessionStartTime!).inSeconds
-            : 0,
-        wordsRead: _sessionWordsRead,
-        scrollProgress: scrollProgress.value,
+      // Check if we already have a recent history entry for this chapter
+      final existingHistory = _historyService.getHistoryByStoryAndChapter(
+        story.value!.id,
+        currentChapter.value!.id
       );
 
-      await _historyService.addHistory(historyEntry);
-      print('📚 Successfully tracked chapter read');
+      // Only create new entry if no recent entry exists (within last hour)
+      final shouldCreateNew = existingHistory == null ||
+          DateTime.now().difference(existingHistory.readAt).inHours > 1;
+
+      if (shouldCreateNew) {
+        // Create reading history entry for current reading position
+        final historyEntry = ReadingHistory(
+          id: '${story.value!.id}_${currentChapter.value!.id}_${DateTime.now().millisecondsSinceEpoch}',
+          storyId: story.value!.id,
+          storyTitle: story.value!.title,
+          storyAuthor: story.value!.author,
+          storyCoverUrl: story.value!.coverImageUrl.isNotEmpty ? story.value!.coverImageUrl : '',
+          chapterId: currentChapter.value!.id,
+          chapterTitle: currentChapter.value!.title,
+          chapterNumber: currentChapter.value!.chapterNumber,
+          action: ReadingAction.read,
+          sourceWebsite: story.value!.sourceWebsite,
+          sessionId: _currentSessionId!,
+          readingDuration: 0, // Just started reading
+          wordsRead: 0, // Will be updated later
+          scrollProgress: 0.0, // Just started
+        );
+
+        await _historyService.addHistory(historyEntry);
+        print('📚 Successfully tracked chapter reading start');
+      } else {
+        print('📚 Recent history entry exists, skipping duplicate');
+      }
     } catch (e) {
       print('📚 Error tracking chapter read: $e');
     }

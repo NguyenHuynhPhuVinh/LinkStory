@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/reading_history_model.dart';
+import '../../../data/models/story_model.dart';
 import '../../../data/services/history_service.dart';
 import '../../../data/services/library_service.dart';
+import '../../../data/services/chapter_service.dart';
 
 class HistoryController extends GetxController {
   // Services
@@ -108,29 +110,45 @@ class HistoryController extends GetxController {
     // Apply search filter
     if (searchQuery.value.isNotEmpty) {
       final query = searchQuery.value.toLowerCase();
-      filtered = filtered.where((history) =>
-          history.storyTitle.toLowerCase().contains(query) ||
-          history.storyAuthor.toLowerCase().contains(query) ||
-          (history.chapterTitle?.toLowerCase().contains(query) ?? false)).toList();
+      filtered = filtered
+          .where(
+            (history) =>
+                history.storyTitle.toLowerCase().contains(query) ||
+                history.storyAuthor.toLowerCase().contains(query) ||
+                (history.chapterTitle?.toLowerCase().contains(query) ?? false),
+          )
+          .toList();
     }
 
     // Apply action filter
     switch (currentFilter.value) {
       case HistoryFilter.read:
-        filtered = filtered.where((h) => h.action == ReadingAction.read).toList();
+        filtered = filtered
+            .where((h) => h.action == ReadingAction.read)
+            .toList();
         break;
       case HistoryFilter.library:
-        filtered = filtered.where((h) =>
-            h.action == ReadingAction.addToLibrary ||
-            h.action == ReadingAction.removeFromLibrary).toList();
+        filtered = filtered
+            .where(
+              (h) =>
+                  h.action == ReadingAction.addToLibrary ||
+                  h.action == ReadingAction.removeFromLibrary,
+            )
+            .toList();
         break;
       case HistoryFilter.favorite:
-        filtered = filtered.where((h) =>
-            h.action == ReadingAction.favorite ||
-            h.action == ReadingAction.unfavorite).toList();
+        filtered = filtered
+            .where(
+              (h) =>
+                  h.action == ReadingAction.favorite ||
+                  h.action == ReadingAction.unfavorite,
+            )
+            .toList();
         break;
       case HistoryFilter.translate:
-        filtered = filtered.where((h) => h.action == ReadingAction.translate).toList();
+        filtered = filtered
+            .where((h) => h.action == ReadingAction.translate)
+            .toList();
         break;
       case HistoryFilter.all:
         // No additional filtering
@@ -139,9 +157,15 @@ class HistoryController extends GetxController {
 
     // Apply date range filter
     if (startDate.value != null && endDate.value != null) {
-      filtered = filtered.where((history) =>
-          history.readAt.isAfter(startDate.value!) &&
-          history.readAt.isBefore(endDate.value!.add(const Duration(days: 1)))).toList();
+      filtered = filtered
+          .where(
+            (history) =>
+                history.readAt.isAfter(startDate.value!) &&
+                history.readAt.isBefore(
+                  endDate.value!.add(const Duration(days: 1)),
+                ),
+          )
+          .toList();
     }
 
     // Apply sorting
@@ -269,21 +293,43 @@ class HistoryController extends GetxController {
     final story = _libraryService.getStoryById(history.storyId);
     if (story != null) {
       if (history.chapterId != null) {
-        // Navigate to specific chapter
-        Get.toNamed('/reading', arguments: {
-          'story': story,
-          'chapterId': history.chapterId,
-        });
+        // Get the actual chapter object from ChapterService
+        try {
+          final chapterService = Get.find<ChapterService>();
+          final chapter = chapterService.getChapterById(history.chapterId!);
+
+          if (chapter != null) {
+            // Navigate directly to reading page with chapter object
+            Get.toNamed(
+              '/reading',
+              arguments: {'story': story, 'chapter': chapter},
+            );
+            print(
+              '📚 Navigating to chapter: ${history.chapterTitle} of story: ${history.storyTitle}',
+            );
+          } else {
+            print('📚 Chapter not found: ${history.chapterId}');
+            Get.snackbar('Lỗi', 'Không tìm thấy chương "${history.chapterTitle}"');
+          }
+        } catch (e) {
+          print('📚 Error getting chapter: $e');
+          Get.snackbar('Lỗi', 'Không thể tải thông tin chương');
+        }
       } else {
-        // Navigate to story detail
+        // If no specific chapter, navigate to story detail to choose chapter
         Get.toNamed('/story-detail', arguments: story);
       }
     } else {
-      Get.snackbar('Lỗi', 'Không tìm thấy thông tin truyện');
+      // Story not found in library, show error message
+      print('📚 Story not found in library: ${history.storyId}');
+      Get.snackbar(
+        'Lỗi',
+        'Truyện "${history.storyTitle}" không còn trong thư viện.\nVui lòng thêm lại truyện để tiếp tục đọc.',
+        duration: const Duration(seconds: 4),
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
-
-
 
   // ==================== UTILITY METHODS ====================
 
@@ -303,8 +349,6 @@ class HistoryController extends GetxController {
       return '${duration.inSeconds}s';
     }
   }
-
-
 
   // Get relative time string
   String getRelativeTime(DateTime dateTime) {
@@ -348,17 +392,6 @@ class HistoryController extends GetxController {
 }
 
 // Enums for filtering and sorting
-enum HistoryFilter {
-  all,
-  read,
-  library,
-  favorite,
-  translate,
-}
+enum HistoryFilter { all, read, library, favorite, translate }
 
-enum HistorySortBy {
-  dateDesc,
-  dateAsc,
-  storyTitle,
-  readingTime,
-}
+enum HistorySortBy { dateDesc, dateAsc, storyTitle, readingTime }
