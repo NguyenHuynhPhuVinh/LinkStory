@@ -60,8 +60,6 @@ class TranslationService {
           topP: 0.8, // Focus on high-probability tokens for accuracy
           topK: 40, // Limit vocabulary for more focused translations
           maxOutputTokens: 2048,
-          frequencyPenalty: 0.1, // Slight penalty to avoid repetition
-          presencePenalty: 0.1, // Encourage diverse vocabulary
         ),
       );
       _isInitialized = true;
@@ -289,8 +287,6 @@ HƯỚNG DẪN DỊCH:
           topP: 0.8, // Focus on high-probability tokens
           topK: 40, // Limit vocabulary for focused output
           maxOutputTokens: 1024,
-          frequencyPenalty: 0.1, // Avoid repetition
-          presencePenalty: 0.1, // Encourage vocabulary diversity
         ),
       );
 
