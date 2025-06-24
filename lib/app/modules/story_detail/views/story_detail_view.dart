@@ -85,54 +85,66 @@ class StoryDetailView extends GetView<StoryDetailController> {
               bottom: 16.h,
               left: 16.w,
               right: 16.w,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          story.displayTitle,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (story.isTranslated) ...[
-                        SizedBox(width: 8.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6.r),
-                            border: Border.all(color: Colors.green, width: 1),
-                          ),
+              child: Obx(() {
+                final currentStory = controller.story.value;
+                if (currentStory == null) {
+                  return Container(
+                    height: 80.h,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            'Đã dịch',
+                            currentStory.displayTitle,
                             style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.white,
+                              fontSize: 24.sp,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (currentStory.isTranslated) ...[
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6.r),
+                              border: Border.all(color: Colors.green, width: 1),
+                            ),
+                            child: Text(
+                              'Đã dịch',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    story.displayAuthor,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: Colors.white.withOpacity(0.9),
                     ),
-                  ),
-                ],
-              ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      currentStory.displayAuthor,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ),
           ],
         ),
@@ -194,15 +206,29 @@ class StoryDetailView extends GetView<StoryDetailController> {
           SizedBox(height: 20.h),
 
           // Story details
-          _buildDetailRow('Tác giả', story.displayAuthor),
-          _buildDetailRow('Nguồn', story.sourceWebsite),
-          _buildDetailRow('Trạng thái', story.status),
-          if (story.translator.isNotEmpty)
-            _buildDetailRow('Người dịch', story.translator),
-          if (story.displayGenres.isNotEmpty)
-            _buildDetailRow('Thể loại', story.displayGenres.join(', ')),
-          if (story.rating > 0)
-            _buildDetailRow('Đánh giá', '${story.rating}/5.0'),
+          Obx(() {
+            final currentStory = controller.story.value;
+            if (currentStory == null) {
+              return Container(
+                height: 100.h,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            return Column(
+              children: [
+                _buildDetailRow('Tác giả', currentStory.displayAuthor),
+                _buildDetailRow('Nguồn', currentStory.sourceWebsite),
+                _buildDetailRow('Trạng thái', currentStory.status),
+                if (currentStory.translator.isNotEmpty)
+                  _buildDetailRow('Người dịch', currentStory.translator),
+                if (currentStory.displayGenres.isNotEmpty)
+                  _buildDetailRow('Thể loại', currentStory.displayGenres.join(', ')),
+                if (currentStory.rating > 0)
+                  _buildDetailRow('Đánh giá', '${currentStory.rating}/5.0'),
+              ],
+            );
+          }),
 
           // Reading progress
           Obx(() {
@@ -216,44 +242,60 @@ class StoryDetailView extends GetView<StoryDetailController> {
           SizedBox(height: 16.h),
 
           // Description
-          if (story.displayDescription.isNotEmpty) ...[
-            Row(
+          Obx(() {
+            final currentStory = controller.story.value;
+            if (currentStory == null) {
+              return Container(
+                height: 50.h,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (currentStory.displayDescription.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Mô tả:',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (story.isTranslated) ...[
-                  SizedBox(width: 8.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4.r),
-                      border: Border.all(color: Colors.green, width: 1),
-                    ),
-                    child: Text(
-                      'Đã dịch',
+                Row(
+                  children: [
+                    Text(
+                      'Mô tả:',
                       style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.green,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    if (currentStory.isTranslated) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4.r),
+                          border: Border.all(color: Colors.green, width: 1),
+                        ),
+                        child: Text(
+                          'Đã dịch',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  currentStory.displayDescription,
+                  style: TextStyle(fontSize: 14.sp),
+                ),
+                SizedBox(height: 20.h),
               ],
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              story.displayDescription,
-              style: TextStyle(fontSize: 14.sp),
-            ),
-            SizedBox(height: 20.h),
-          ],
+            );
+          }),
         ],
       ),
     );

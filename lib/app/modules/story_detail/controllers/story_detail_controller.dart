@@ -5,6 +5,7 @@ import '../../../data/models/chapter_model.dart';
 import '../../../data/services/library_service.dart';
 import '../../../data/services/chapter_service.dart';
 import '../../../data/services/story_translation_service.dart';
+import '../../library/controllers/library_controller.dart';
 
 class StoryDetailController extends GetxController {
   late final LibraryService _libraryService;
@@ -19,6 +20,9 @@ class StoryDetailController extends GetxController {
   final RxString searchQuery = ''.obs;
   final RxString selectedFilter = 'all'.obs; // all, read, unread
   final RxBool showSearch = false.obs;
+
+  // Flag to prevent auto-refresh during translation
+  bool _isTranslating = false;
   
   // Search controller
   final TextEditingController searchController = TextEditingController();
@@ -39,17 +43,34 @@ class StoryDetailController extends GetxController {
     final storyArg = Get.arguments;
     if (storyArg is Story) {
       story.value = storyArg;
+      print('📖 Story loaded from arguments: ${storyArg.title}, isTranslated: ${storyArg.isTranslated}');
     }
 
     // Listen to search changes
     searchQuery.listen((_) => _filterChapters());
     selectedFilter.listen((_) => _filterChapters());
+
+    // Listen to translation state changes to reload story
+    ever(_storyTranslationService.isTranslating, (isTranslating) {
+      if (!isTranslating && story.value != null) {
+        // Translation finished, reload story after a delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          print('🔄 Auto-reloading story after translation...');
+          _reloadStoryFromDatabase();
+        });
+      }
+    });
   }
 
   @override
   void onReady() {
     super.onReady();
     _initializeAndLoadChapters();
+  }
+
+  // Public method to reload story (can be called from UI)
+  Future<void> reloadStory() async {
+    await _reloadStoryFromDatabase();
   }
 
   @override
@@ -63,10 +84,42 @@ class StoryDetailController extends GetxController {
     try {
       isLoading.value = true;
       await _chapterService.init();
+
+      // Reload story from database to get latest data
+      await _reloadStoryFromDatabase();
+
       await loadChapters();
     } catch (e) {
       print('Error initializing services: $e');
       isLoading.value = false;
+    }
+  }
+
+  // Reload story from database
+  Future<void> _reloadStoryFromDatabase() async {
+    if (story.value == null) return;
+
+    try {
+      final freshStory = _libraryService.getStoryById(story.value!.id);
+      if (freshStory != null) {
+        print('🔄 Reloaded story from database: isTranslated=${freshStory.isTranslated}, title=${freshStory.displayTitle}');
+
+        // Force reactive update by setting to null first, then to new value
+        story.value = null;
+        await Future.delayed(const Duration(milliseconds: 50));
+        story.value = freshStory;
+
+        // Force refresh
+        story.refresh();
+        update();
+
+        print('✅ Story updated - current title: ${story.value?.displayTitle}, isTranslated: ${story.value?.isTranslated}');
+
+        // Notify library controller to reload
+        _notifyLibraryReload();
+      }
+    } catch (e) {
+      print('❌ Error reloading story from database: $e');
     }
   }
   
@@ -85,6 +138,7 @@ class StoryDetailController extends GetxController {
       _filterChapters();
 
       print('Loaded ${allChapters.length} chapters for story: ${story.value!.title}');
+      print('📊 Story in loadChapters - isTranslated: ${story.value!.isTranslated}, displayTitle: ${story.value!.displayTitle}');
 
       // Debug: Check how many chapters have content
       final chaptersWithContent = allChapters.where((c) => c.hasContent).length;
@@ -287,6 +341,10 @@ class StoryDetailController extends GetxController {
   
   // Refresh data
   Future<void> refresh() async {
+    if (_isTranslating) {
+      print('⏸️ Skipping refresh during translation');
+      return;
+    }
     print('Manual refresh triggered');
     await loadChapters();
   }
@@ -296,31 +354,40 @@ class StoryDetailController extends GetxController {
     final currentStory = story.value;
     if (currentStory == null) return;
 
-    final updatedStory = await _storyTranslationService.translateStory(currentStory);
-    if (updatedStory != null) {
-      print('✅ Translation completed, refreshing story detail UI...');
+    try {
+      _isTranslating = true;
 
-      // Wait a bit to ensure database write is completed
-      await Future.delayed(const Duration(milliseconds: 100));
+      final updatedStory = await _storyTranslationService.translateStory(currentStory);
+      if (updatedStory != null) {
+        print('✅ Translation completed, reloading story...');
 
-      // Force refresh the story from database to ensure we have the latest data
-      final freshStory = _libraryService.getStoryById(updatedStory.id);
-      if (freshStory != null) {
-        print('📖 Loaded fresh story from database: isTranslated=${freshStory.isTranslated}');
-        print('📖 Fresh story title: ${freshStory.displayTitle}');
-        story.value = freshStory;
-      } else {
-        print('⚠️ Could not load fresh story from database, using updated story');
-        // Fallback to the updated story if database read fails
-        story.value = updatedStory;
+        // Wait a bit to ensure database write is completed
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        // Reload story from database
+        await _reloadStoryFromDatabase();
+
+        print('✅ Story reloaded - final title: ${story.value?.displayTitle}');
+        print('🔍 Final check - isTranslated: ${story.value?.isTranslated}');
       }
-
-      // Force UI update by triggering reactive update
-      story.refresh();
-      update(); // Force GetX controller update
+    } finally {
+      _isTranslating = false;
     }
   }
 
   // Get translation states
   RxBool get isTranslating => _storyTranslationService.isTranslating;
+
+  // Notify library controller to reload after translation
+  void _notifyLibraryReload() {
+    try {
+      final libraryController = Get.find<LibraryController>();
+      print('📢 Notifying library controller to reload...');
+      Future.delayed(const Duration(milliseconds: 300), () {
+        libraryController.loadStories();
+      });
+    } catch (e) {
+      print('❌ Library controller not found: $e');
+    }
+  }
 }
