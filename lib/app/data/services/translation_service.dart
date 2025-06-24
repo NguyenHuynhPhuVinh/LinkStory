@@ -49,7 +49,7 @@ class TranslationService {
 
       // Initialize the Gemini Developer API backend service with structured output
       _model = FirebaseAI.googleAI().generativeModel(
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction: Content.system(_getSystemInstruction()),
         safetySettings: safetySettings,
         generationConfig: GenerationConfig(
@@ -262,18 +262,26 @@ HƯỚNG DẪN DỊCH:
       final safetySettings = [
         SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none, null),
         SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none, null),
-        SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none, null),
-        SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none, null),
+        SafetySetting(
+          HarmCategory.sexuallyExplicit,
+          HarmBlockThreshold.none,
+          null,
+        ),
+        SafetySetting(
+          HarmCategory.dangerousContent,
+          HarmBlockThreshold.none,
+          null,
+        ),
       ];
 
       // Create model for chapter translation
       final chapterModel = FirebaseAI.googleAI().generativeModel(
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction: Content.system(
           'Bạn là chuyên gia dịch light novel từ tiếng Nhật sang tiếng Việt. '
           'Hãy dịch cả tiêu đề và nội dung chương một cách tự nhiên, giữ nguyên format và cấu trúc. '
           'Sử dụng thuật ngữ phù hợp với thể loại light novel. '
-          'Trả về JSON với format: {"title": "tiêu đề đã dịch", "content": "nội dung đã dịch"}'
+          'Trả về JSON với format: {"title": "tiêu đề đã dịch", "content": "nội dung đã dịch"}',
         ),
         safetySettings: safetySettings,
         generationConfig: GenerationConfig(
@@ -292,7 +300,8 @@ HƯỚNG DẪN DỊCH:
         return await _translateLongChapter(chapterModel, title, content);
       }
 
-      final prompt = '''
+      final prompt =
+          '''
 Dịch tiêu đề và nội dung chương sau từ tiếng Nhật sang tiếng Việt:
 
 TIÊU ĐỀ: $title
@@ -303,7 +312,9 @@ $content
 Hãy dịch tự nhiên và giữ nguyên format. Trả về JSON với format chính xác.
 ''';
 
-      final response = await chapterModel.generateContent([Content.text(prompt)]);
+      final response = await chapterModel.generateContent([
+        Content.text(prompt),
+      ]);
 
       if (response.text == null) {
         print('❌ No response from chapter translation service');
@@ -353,7 +364,7 @@ Hãy dịch tự nhiên và giữ nguyên format. Trả về JSON với format c
 
       // Create a simple model for text translation (without JSON schema)
       final textModel = FirebaseAI.googleAI().generativeModel(
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction: Content.system(
           'Bạn là chuyên gia dịch thuật. Dịch text từ tiếng Nhật sang tiếng Việt một cách tự nhiên và chính xác. '
           'Chỉ trả về kết quả dịch, không thêm giải thích.',
@@ -381,15 +392,19 @@ Hãy dịch tự nhiên và giữ nguyên format. Trả về JSON với format c
   Future<Map<String, String>?> _translateLongChapter(
     GenerativeModel model,
     String title,
-    String content
+    String content,
   ) async {
     try {
       print('📄 Translating long chapter in chunks...');
 
       // Dịch tiêu đề trước
-      final titlePrompt = 'Dịch tiêu đề chương này từ tiếng Nhật sang tiếng Việt: "$title"';
-      final titleResponse = await model.generateContent([Content.text(titlePrompt)]);
-      final translatedTitle = titleResponse.text?.trim().replaceAll('"', '') ?? title;
+      final titlePrompt =
+          'Dịch tiêu đề chương này từ tiếng Nhật sang tiếng Việt: "$title"';
+      final titleResponse = await model.generateContent([
+        Content.text(titlePrompt),
+      ]);
+      final translatedTitle =
+          titleResponse.text?.trim().replaceAll('"', '') ?? title;
 
       // Chia nội dung thành các đoạn
       final chunks = _splitContentIntoChunks(content, 8000);
@@ -398,7 +413,8 @@ Hãy dịch tự nhiên và giữ nguyên format. Trả về JSON với format c
       for (int i = 0; i < chunks.length; i++) {
         print('🔄 Translating chunk ${i + 1}/${chunks.length}');
 
-        final chunkPrompt = '''
+        final chunkPrompt =
+            '''
 Dịch đoạn văn sau từ tiếng Nhật sang tiếng Việt. Giữ nguyên format và cấu trúc:
 
 ${chunks[i]}
@@ -406,11 +422,15 @@ ${chunks[i]}
 Chỉ trả về nội dung đã dịch, không thêm giải thích.
 ''';
 
-        final chunkResponse = await model.generateContent([Content.text(chunkPrompt)]);
+        final chunkResponse = await model.generateContent([
+          Content.text(chunkPrompt),
+        ]);
         if (chunkResponse.text != null) {
           translatedChunks.add(chunkResponse.text!.trim());
         } else {
-          translatedChunks.add(chunks[i]); // Fallback to original if translation fails
+          translatedChunks.add(
+            chunks[i],
+          ); // Fallback to original if translation fails
         }
 
         // Delay nhỏ để tránh rate limit
@@ -419,10 +439,7 @@ Chỉ trả về nội dung đã dịch, không thêm giải thích.
 
       final translatedContent = translatedChunks.join('\n\n');
 
-      return {
-        'title': translatedTitle,
-        'content': translatedContent,
-      };
+      return {'title': translatedTitle, 'content': translatedContent};
     } catch (e) {
       print('❌ Error translating long chapter: $e');
       return null;

@@ -8,6 +8,8 @@ abstract class Routes {
   static const READER = _Paths.READER;
   static const HISTORY = _Paths.HISTORY;
   static const SETTINGS = _Paths.SETTINGS;
+  static const FIREBASE_SETTINGS = _Paths.FIREBASE_SETTINGS;
+  static const APP_INFO = _Paths.APP_INFO;
   static const AI = _Paths.AI;
   static const WEBVIEW = _Paths.WEBVIEW;
   static const STORY_DETAIL = _Paths.STORY_DETAIL;
@@ -21,6 +23,8 @@ abstract class _Paths {
   static const READER = '/reader';
   static const HISTORY = '/history';
   static const SETTINGS = '/settings';
+  static const FIREBASE_SETTINGS = '/settings/firebase';
+  static const APP_INFO = '/settings/app-info';
   static const AI = '/ai';
   static const WEBVIEW = '/webview';
   static const STORY_DETAIL = '/story-detail';

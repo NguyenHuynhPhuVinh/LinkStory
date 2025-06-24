@@ -9,6 +9,10 @@ import '../modules/history/bindings/history_binding.dart';
 import '../modules/history/views/history_view.dart';
 import '../modules/settings/bindings/settings_binding.dart';
 import '../modules/settings/views/settings_view.dart';
+import '../modules/settings/bindings/firebase_settings_binding.dart';
+import '../modules/settings/views/firebase_settings_view.dart';
+import '../modules/settings/bindings/app_info_binding.dart';
+import '../modules/settings/views/app_info_view.dart';
 import '../modules/ai/bindings/ai_binding.dart';
 import '../modules/ai/views/ai_view.dart';
 import '../modules/webview/bindings/webview_binding.dart';
@@ -50,6 +54,16 @@ class AppPages {
       name: _Paths.SETTINGS,
       page: () => const SettingsView(),
       binding: SettingsBinding(),
+    ),
+    GetPage(
+      name: _Paths.FIREBASE_SETTINGS,
+      page: () => const FirebaseSettingsView(),
+      binding: FirebaseSettingsBinding(),
+    ),
+    GetPage(
+      name: _Paths.APP_INFO,
+      page: () => const AppInfoView(),
+      binding: AppInfoBinding(),
     ),
     GetPage(name: _Paths.AI, page: () => const AiView(), binding: AiBinding()),
     GetPage(
