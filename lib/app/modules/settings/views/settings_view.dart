@@ -93,13 +93,13 @@ class SettingsView extends GetView<SettingsController> {
           item.subtitle,
           style: TextStyle(
             fontSize: 14.sp,
-            color: Colors.grey[600],
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
         trailing: Icon(
           Iconsax.arrow_right_3,
           size: 20.sp,
-          color: Colors.grey[400],
+          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.4),
         ),
         onTap: item.onTap,
       ),

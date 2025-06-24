@@ -437,7 +437,7 @@ class StoryDetailView extends GetView<StoryDetailController> {
                     : 'Chưa có chương nào',
                 style: TextStyle(
                   fontSize: 16.sp,
-                  color: Colors.grey[600],
+                  color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ),
@@ -597,7 +597,9 @@ class StoryDetailView extends GetView<StoryDetailController> {
                   // Read status icon
                   Icon(
                     chapter.isRead ? Iconsax.tick_circle : Iconsax.clock,
-                    color: chapter.isRead ? Colors.green : Colors.grey,
+                    color: chapter.isRead
+                        ? Colors.green
+                        : Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
                     size: 20.sp,
                   ),
 
@@ -608,7 +610,7 @@ class StoryDetailView extends GetView<StoryDetailController> {
                     icon: Icon(
                       Iconsax.more,
                       size: 16.sp,
-                      color: Colors.grey,
+                      color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
                     ),
                     onSelected: (value) {
                       switch (value) {

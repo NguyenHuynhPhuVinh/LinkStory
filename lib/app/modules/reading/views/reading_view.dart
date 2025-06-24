@@ -12,7 +12,7 @@ class ReadingView extends GetView<ReadingController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
-      backgroundColor: controller.isDarkMode.value ? Colors.black : Colors.white,
+      backgroundColor: Theme.of(Get.context!).scaffoldBackgroundColor,
       appBar: controller.showAppBar.value ? _buildAppBar() : null,
       body: _buildBody(),
       bottomNavigationBar: controller.showAppBar.value ? _buildBottomBar() : null,
@@ -82,10 +82,15 @@ class ReadingView extends GetView<ReadingController> {
         }),
         IconButton(
           icon: Icon(
-            controller.isDarkMode.value ? Iconsax.sun_1 : Iconsax.moon,
+            Theme.of(Get.context!).brightness == Brightness.dark
+                ? Iconsax.sun_1
+                : Iconsax.moon,
             size: 20.sp,
           ),
-          onPressed: controller.toggleDarkMode,
+          onPressed: () {
+            // Navigate to theme settings instead of local toggle
+            Get.toNamed('/settings/theme');
+          },
         ),
         IconButton(
           icon: Icon(Iconsax.setting_2, size: 20.sp),
@@ -146,14 +151,14 @@ class ReadingView extends GetView<ReadingController> {
           Icon(
             Iconsax.document_text,
             size: 64.sp,
-            color: Colors.grey,
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
           ),
           SizedBox(height: 16.h),
           Text(
             'Không có nội dung',
             style: TextStyle(
               fontSize: 18.sp,
-              color: Colors.grey,
+              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 8.h),
@@ -161,7 +166,7 @@ class ReadingView extends GetView<ReadingController> {
             'Chương này có thể bị khóa hoặc cần đăng nhập',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Colors.grey,
+              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
             ),
             textAlign: TextAlign.center,
           ),
@@ -182,9 +187,9 @@ class ReadingView extends GetView<ReadingController> {
         // Progress indicator
         Obx(() => LinearProgressIndicator(
           value: controller.scrollProgress.value,
-          backgroundColor: Colors.grey[300],
+          backgroundColor: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.2),
           valueColor: AlwaysStoppedAnimation<Color>(
-            controller.isDarkMode.value ? Colors.white : Colors.blue,
+            Theme.of(Get.context!).colorScheme.primary,
           ),
         )),
         
@@ -198,9 +203,9 @@ class ReadingView extends GetView<ReadingController> {
               style: TextStyle(
                 fontSize: controller.fontSize.value.sp,
                 height: controller.lineHeight.value,
-                color: controller.isDarkMode.value ? Colors.white : Colors.black,
-                fontFamily: controller.fontFamily.value == 'Default' 
-                    ? null 
+                color: Theme.of(Get.context!).colorScheme.onSurface,
+                fontFamily: controller.fontFamily.value == 'Default'
+                    ? null
                     : controller.fontFamily.value,
               ),
             )),
@@ -230,7 +235,7 @@ class ReadingView extends GetView<ReadingController> {
             onPressed: controller.goToPreviousChapter,
             icon: Icon(
               Iconsax.arrow_left_2,
-              color: controller.isDarkMode.value ? Colors.white : Colors.black,
+              color: Theme.of(Get.context!).colorScheme.onSurface,
             ),
             tooltip: 'Chương trước',
           ),
@@ -242,7 +247,7 @@ class ReadingView extends GetView<ReadingController> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.sp,
-                color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                color: Theme.of(Get.context!).colorScheme.onSurface,
               ),
             )),
           ),
@@ -252,7 +257,7 @@ class ReadingView extends GetView<ReadingController> {
             onPressed: controller.goToNextChapter,
             icon: Icon(
               Iconsax.arrow_right_3,
-              color: controller.isDarkMode.value ? Colors.white : Colors.black,
+              color: Theme.of(Get.context!).colorScheme.onSurface,
             ),
             tooltip: 'Chương tiếp',
           ),
@@ -344,18 +349,19 @@ class ReadingView extends GetView<ReadingController> {
             
             SizedBox(height: 16.h),
             
-            // Dark mode toggle
+            // Theme settings
             ListTile(
               title: Text(
-                'Chế độ tối',
+                'Cài đặt giao diện',
                 style: TextStyle(
-                  color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                  color: Theme.of(Get.context!).colorScheme.onSurface,
                 ),
               ),
-              trailing: Obx(() => Switch(
-                value: controller.isDarkMode.value,
-                onChanged: (_) => controller.toggleDarkMode(),
-              )),
+              trailing: Icon(
+                Iconsax.arrow_right_3,
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              onTap: () => Get.toNamed('/settings/theme'),
               contentPadding: EdgeInsets.zero,
             ),
           ],

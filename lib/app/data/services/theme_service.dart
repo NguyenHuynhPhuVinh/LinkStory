@@ -81,6 +81,20 @@ class ThemeService extends GetxService {
       centerTitle: true,
       elevation: 0,
     ),
+    cardTheme: CardThemeData(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+    dividerTheme: const DividerThemeData(
+      thickness: 1,
+      space: 1,
+    ),
+    textTheme: const TextTheme().apply(
+      bodyColor: Colors.black87,
+      displayColor: Colors.black87,
+    ),
   );
 
   static ThemeData get darkTheme => ThemeData(
@@ -92,6 +106,20 @@ class ThemeService extends GetxService {
     appBarTheme: const AppBarTheme(
       centerTitle: true,
       elevation: 0,
+    ),
+    cardTheme: CardThemeData(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+    dividerTheme: const DividerThemeData(
+      thickness: 1,
+      space: 1,
+    ),
+    textTheme: const TextTheme().apply(
+      bodyColor: Colors.white70,
+      displayColor: Colors.white70,
     ),
   );
 }

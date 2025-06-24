@@ -59,7 +59,10 @@ class WebViewView extends GetView<controllers.WebViewController> {
                 Expanded(
                   child: Text(
                     controller.currentUrl,
-                    style: TextStyle(fontSize: 10.sp, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

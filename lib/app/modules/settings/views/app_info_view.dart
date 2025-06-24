@@ -59,13 +59,13 @@ class AppInfoView extends GetView<AppInfoController> {
               width: 80.w,
               height: 80.h,
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16.r),
               ),
               child: Icon(
                 Iconsax.book,
                 size: 40.sp,
-                color: Colors.blue,
+                color: Theme.of(Get.context!).colorScheme.primary,
               ),
             ),
             
@@ -87,7 +87,7 @@ class AppInfoView extends GetView<AppInfoController> {
               'Phiên bản ${controller.formattedVersion}',
               style: TextStyle(
                 fontSize: 14.sp,
-                color: Colors.grey[600],
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
           ],
@@ -164,7 +164,7 @@ class AppInfoView extends GetView<AppInfoController> {
           Icon(
             icon,
             size: 18.sp,
-            color: Colors.grey[600],
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -172,7 +172,7 @@ class AppInfoView extends GetView<AppInfoController> {
               label,
               style: TextStyle(
                 fontSize: 14.sp,
-                color: Colors.grey[700],
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
           ),

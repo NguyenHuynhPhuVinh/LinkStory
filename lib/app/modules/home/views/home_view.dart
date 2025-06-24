@@ -45,16 +45,13 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildMobileNavBar() {
-    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(Get.context!).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             blurRadius: 20.r,
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.black.withOpacity(0.1),
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.1),
           )
         ],
       ),
@@ -78,16 +75,13 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildTabletNavBar() {
-    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(Get.context!).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             blurRadius: 20.r,
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.black.withOpacity(0.1),
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.1),
           )
         ],
       ),
@@ -96,17 +90,16 @@ class HomeView extends GetView<HomeController> {
           height: 70.h,
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           child: Obx(() {
-            final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
             return GNav(
-              rippleColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-              hoverColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+              rippleColor: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
+              hoverColor: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.05),
               gap: 8.w,
               activeColor: Theme.of(Get.context!).colorScheme.primary,
               iconSize: 24.r,
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
-              color: Theme.of(Get.context!).colorScheme.onSurface,
+              tabBackgroundColor: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
             tabs: [
               GButton(
                 icon: Iconsax.book,

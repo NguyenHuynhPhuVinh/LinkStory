@@ -111,21 +111,28 @@ class ReaderView extends GetView<ReaderController> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Iconsax.global, size: 64.r, color: Colors.grey),
+              Icon(
+                Iconsax.global,
+                size: 64.r,
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+              ),
               SizedBox(height: 16.h),
               Text(
                 'Không có nguồn truyện',
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+                  color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
                 ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8.h),
               Text(
                 'Hãy thêm nguồn truyện để bắt đầu đọc',
-                style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

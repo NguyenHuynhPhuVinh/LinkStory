@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../controllers/history_controller.dart';
 
@@ -22,30 +23,30 @@ class HistoryView extends GetView<HistoryController> {
           ),
         ],
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Iconsax.clock,
-              size: 64,
-              color: Colors.grey,
+              size: 64.sp,
+              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               'Lịch sử đọc',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 24.sp,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               'Đang phát triển...',
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+                fontSize: 16.sp,
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
               ),
             ),
           ],

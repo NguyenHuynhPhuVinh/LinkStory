@@ -64,7 +64,7 @@ class ThemeSettingsView extends GetView<ThemeSettingsController> {
                     'Giao diện hiện tại',
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: Colors.grey[600],
+                      color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -132,14 +132,14 @@ class ThemeSettingsView extends GetView<ThemeSettingsController> {
           decoration: BoxDecoration(
             color: controller.isThemeSelected(theme)
                 ? Theme.of(Get.context!).colorScheme.primary.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                : Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(
             theme.icon,
             color: controller.isThemeSelected(theme)
                 ? Theme.of(Get.context!).colorScheme.primary
-                : Colors.grey[600],
+                : Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
             size: 20.sp,
           ),
         ),
@@ -159,7 +159,7 @@ class ThemeSettingsView extends GetView<ThemeSettingsController> {
           _getThemeDescription(theme),
           style: TextStyle(
             fontSize: 14.sp,
-            color: Colors.grey[600],
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
         trailing: controller.isThemeSelected(theme)

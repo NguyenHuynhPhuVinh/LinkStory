@@ -154,7 +154,7 @@ class FirebaseSettingsView extends GetView<FirebaseSettingsController> {
               children: [
                 Icon(
                   Iconsax.info_circle,
-                  color: Colors.blue,
+                  color: Theme.of(Get.context!).colorScheme.primary,
                   size: 16.sp,
                 ),
                 SizedBox(width: 8.w),
@@ -163,7 +163,7 @@ class FirebaseSettingsView extends GetView<FirebaseSettingsController> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: Theme.of(Get.context!).colorScheme.primary,
                   ),
                 ),
               ],
@@ -176,7 +176,7 @@ class FirebaseSettingsView extends GetView<FirebaseSettingsController> {
               '4. Khởi động lại ứng dụng để áp dụng',
               style: TextStyle(
                 fontSize: 12.sp,
-                color: Colors.grey[700],
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.7),
                 height: 1.4,
               ),
             ),

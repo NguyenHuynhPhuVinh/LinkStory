@@ -192,7 +192,7 @@ class LibraryView extends GetView<LibraryController> {
           Icon(
             Iconsax.book,
             size: 64.sp,
-            color: Colors.grey,
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -200,7 +200,7 @@ class LibraryView extends GetView<LibraryController> {
             style: TextStyle(
               fontSize: 24.sp,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 8.h),
@@ -208,7 +208,7 @@ class LibraryView extends GetView<LibraryController> {
             'Hãy thêm truyện từ trang Reader',
             style: TextStyle(
               fontSize: 16.sp,
-              color: Colors.grey,
+              color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 24.h),
