@@ -61,6 +61,25 @@ class Story extends HiveObject {
   @HiveField(18)
   Map<String, dynamic> metadata; // Thông tin bổ sung
 
+  // Translation fields
+  @HiveField(19)
+  String? translatedTitle; // Tiêu đề đã dịch
+
+  @HiveField(20)
+  String? translatedAuthor; // Tác giả đã dịch
+
+  @HiveField(21)
+  String? translatedDescription; // Mô tả đã dịch
+
+  @HiveField(22)
+  List<String>? translatedGenres; // Thể loại đã dịch
+
+  @HiveField(23)
+  bool isTranslated; // Đã dịch hay chưa
+
+  @HiveField(24)
+  DateTime? translatedAt; // Thời gian dịch
+
   Story({
     required this.id,
     required this.title,
@@ -81,6 +100,13 @@ class Story extends HiveObject {
     this.translator = '',
     this.originalLanguage = '',
     this.metadata = const {},
+    // Translation fields
+    this.translatedTitle,
+    this.translatedAuthor,
+    this.translatedDescription,
+    this.translatedGenres,
+    this.isTranslated = false,
+    this.translatedAt,
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
@@ -105,6 +131,13 @@ class Story extends HiveObject {
     String? translator,
     String? originalLanguage,
     Map<String, dynamic>? metadata,
+    // Translation fields
+    String? translatedTitle,
+    String? translatedAuthor,
+    String? translatedDescription,
+    List<String>? translatedGenres,
+    bool? isTranslated,
+    DateTime? translatedAt,
   }) {
     return Story(
       id: id ?? this.id,
@@ -126,6 +159,13 @@ class Story extends HiveObject {
       translator: translator ?? this.translator,
       originalLanguage: originalLanguage ?? this.originalLanguage,
       metadata: metadata ?? this.metadata,
+      // Translation fields
+      translatedTitle: translatedTitle ?? this.translatedTitle,
+      translatedAuthor: translatedAuthor ?? this.translatedAuthor,
+      translatedDescription: translatedDescription ?? this.translatedDescription,
+      translatedGenres: translatedGenres ?? this.translatedGenres,
+      isTranslated: isTranslated ?? this.isTranslated,
+      translatedAt: translatedAt ?? this.translatedAt,
     );
   }
 
@@ -151,6 +191,13 @@ class Story extends HiveObject {
       'translator': translator,
       'originalLanguage': originalLanguage,
       'metadata': metadata,
+      // Translation fields
+      'translatedTitle': translatedTitle,
+      'translatedAuthor': translatedAuthor,
+      'translatedDescription': translatedDescription,
+      'translatedGenres': translatedGenres,
+      'isTranslated': isTranslated,
+      'translatedAt': translatedAt?.toIso8601String(),
     };
   }
 
@@ -176,6 +223,17 @@ class Story extends HiveObject {
       translator: json['translator'] ?? '',
       originalLanguage: json['originalLanguage'] ?? '',
       metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
+      // Translation fields
+      translatedTitle: json['translatedTitle'],
+      translatedAuthor: json['translatedAuthor'],
+      translatedDescription: json['translatedDescription'],
+      translatedGenres: json['translatedGenres'] != null
+          ? List<String>.from(json['translatedGenres'])
+          : null,
+      isTranslated: json['isTranslated'] ?? false,
+      translatedAt: json['translatedAt'] != null
+          ? DateTime.parse(json['translatedAt'])
+          : null,
     );
   }
 
@@ -205,4 +263,25 @@ class Story extends HiveObject {
     if (totalChapters == 0) return 'Chưa có chương';
     return '$readChapters/$totalChapters chương';
   }
+
+  // Translation helper methods
+  String get displayTitle => isTranslated && translatedTitle != null
+      ? translatedTitle!
+      : title;
+
+  String get displayAuthor => isTranslated && translatedAuthor != null
+      ? translatedAuthor!
+      : author;
+
+  String get displayDescription => isTranslated && translatedDescription != null
+      ? translatedDescription!
+      : description;
+
+  List<String> get displayGenres => isTranslated && translatedGenres != null
+      ? translatedGenres!
+      : genres;
+
+  bool get isSyosetuStory => sourceUrl.contains('syosetu.com');
+
+  bool get canBeTranslated => isSyosetuStory && !isTranslated;
 }

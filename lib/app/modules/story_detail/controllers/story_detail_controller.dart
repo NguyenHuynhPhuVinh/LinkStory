@@ -4,10 +4,12 @@ import '../../../data/models/story_model.dart';
 import '../../../data/models/chapter_model.dart';
 import '../../../data/services/library_service.dart';
 import '../../../data/services/chapter_service.dart';
+import '../../../data/services/story_translation_service.dart';
 
 class StoryDetailController extends GetxController {
   late final LibraryService _libraryService;
   late final ChapterService _chapterService;
+  late final StoryTranslationService _storyTranslationService;
   
   // Observable states
   final Rx<Story?> story = Rx<Story?>(null);
@@ -28,6 +30,10 @@ class StoryDetailController extends GetxController {
     // Get services from GetX
     _libraryService = Get.find<LibraryService>();
     _chapterService = Get.find<ChapterService>();
+    _storyTranslationService = StoryTranslationService();
+
+    // Initialize translation service
+    _storyTranslationService.init();
 
     // Get story from arguments
     final storyArg = Get.arguments;
@@ -284,4 +290,37 @@ class StoryDetailController extends GetxController {
     print('Manual refresh triggered');
     await loadChapters();
   }
+
+  // Translate story to Vietnamese
+  Future<void> translateStory() async {
+    final currentStory = story.value;
+    if (currentStory == null) return;
+
+    final updatedStory = await _storyTranslationService.translateStory(currentStory);
+    if (updatedStory != null) {
+      print('✅ Translation completed, refreshing story detail UI...');
+
+      // Wait a bit to ensure database write is completed
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Force refresh the story from database to ensure we have the latest data
+      final freshStory = _libraryService.getStoryById(updatedStory.id);
+      if (freshStory != null) {
+        print('📖 Loaded fresh story from database: isTranslated=${freshStory.isTranslated}');
+        print('📖 Fresh story title: ${freshStory.displayTitle}');
+        story.value = freshStory;
+      } else {
+        print('⚠️ Could not load fresh story from database, using updated story');
+        // Fallback to the updated story if database read fails
+        story.value = updatedStory;
+      }
+
+      // Force UI update by triggering reactive update
+      story.refresh();
+      update(); // Force GetX controller update
+    }
+  }
+
+  // Get translation states
+  RxBool get isTranslating => _storyTranslationService.isTranslating;
 }

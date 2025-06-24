@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "318957913804",
+    "project_id": "linkstory-43c2e",
+    "storage_bucket": "linkstory-43c2e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318957913804:android:0dc05b63bb7db81ff5a469",
+        "android_client_info": {
+          "package_name": "com.tomisakae.linkstory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdI1gJYSBM2BM7xy9TubFo5unyCmjFGD8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

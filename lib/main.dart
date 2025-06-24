@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'app/routes/app_pages.dart';
 import 'app/data/models/website_model.dart';
 import 'app/data/models/story_model.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize Hive
   await Hive.initFlutter();

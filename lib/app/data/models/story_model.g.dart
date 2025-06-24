@@ -36,13 +36,19 @@ class StoryAdapter extends TypeAdapter<Story> {
       translator: fields[16] as String,
       originalLanguage: fields[17] as String,
       metadata: (fields[18] as Map).cast<String, dynamic>(),
+      translatedTitle: fields[19] as String?,
+      translatedAuthor: fields[20] as String?,
+      translatedDescription: fields[21] as String?,
+      translatedGenres: (fields[22] as List?)?.cast<String>(),
+      isTranslated: fields[23] as bool,
+      translatedAt: fields[24] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Story obj) {
     writer
-      ..writeByte(19)
+      ..writeByte(25)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -80,7 +86,19 @@ class StoryAdapter extends TypeAdapter<Story> {
       ..writeByte(17)
       ..write(obj.originalLanguage)
       ..writeByte(18)
-      ..write(obj.metadata);
+      ..write(obj.metadata)
+      ..writeByte(19)
+      ..write(obj.translatedTitle)
+      ..writeByte(20)
+      ..write(obj.translatedAuthor)
+      ..writeByte(21)
+      ..write(obj.translatedDescription)
+      ..writeByte(22)
+      ..write(obj.translatedGenres)
+      ..writeByte(23)
+      ..write(obj.isTranslated)
+      ..writeByte(24)
+      ..write(obj.translatedAt);
   }
 
   @override

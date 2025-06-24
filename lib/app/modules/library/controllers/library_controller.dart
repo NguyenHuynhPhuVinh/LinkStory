@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/story_model.dart';
 import '../../../data/services/library_service.dart';
+import '../../../data/services/story_translation_service.dart';
 
 class LibraryController extends GetxController {
   final LibraryService _libraryService = LibraryService();
+  final StoryTranslationService _storyTranslationService = StoryTranslationService();
 
   // Observable states
   final RxList<Story> stories = <Story>[].obs;
@@ -20,6 +22,9 @@ class LibraryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
+    // Initialize translation service
+    _storyTranslationService.init();
 
     // Listen to search changes
     searchQuery.listen((_) => _filterStories());
@@ -217,4 +222,17 @@ class LibraryController extends GetxController {
   Future<void> refreshLibrary() async {
     await loadStories();
   }
+
+  // Translate story to Vietnamese
+  Future<void> translateStory(Story story) async {
+    final updatedStory = await _storyTranslationService.translateStory(story);
+    if (updatedStory != null) {
+      // Reload stories to reflect changes
+      await loadStories();
+    }
+  }
+
+  // Get translation states
+  RxBool get isTranslating => _storyTranslationService.isTranslating;
+  RxString get translatingStoryId => _storyTranslationService.translatingStoryId;
 }

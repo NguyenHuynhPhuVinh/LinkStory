@@ -88,19 +88,44 @@ class StoryDetailView extends GetView<StoryDetailController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    story.title,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          story.displayTitle,
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (story.isTranslated) ...[
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(6.r),
+                            border: Border.all(color: Colors.green, width: 1),
+                          ),
+                          child: Text(
+                            'Đã dịch',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    story.author,
+                    story.displayAuthor,
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: Colors.white.withOpacity(0.9),
@@ -169,13 +194,13 @@ class StoryDetailView extends GetView<StoryDetailController> {
           SizedBox(height: 20.h),
 
           // Story details
-          _buildDetailRow('Tác giả', story.author),
+          _buildDetailRow('Tác giả', story.displayAuthor),
           _buildDetailRow('Nguồn', story.sourceWebsite),
           _buildDetailRow('Trạng thái', story.status),
           if (story.translator.isNotEmpty)
             _buildDetailRow('Người dịch', story.translator),
-          if (story.genres.isNotEmpty)
-            _buildDetailRow('Thể loại', story.genres.join(', ')),
+          if (story.displayGenres.isNotEmpty)
+            _buildDetailRow('Thể loại', story.displayGenres.join(', ')),
           if (story.rating > 0)
             _buildDetailRow('Đánh giá', '${story.rating}/5.0'),
 
@@ -191,17 +216,40 @@ class StoryDetailView extends GetView<StoryDetailController> {
           SizedBox(height: 16.h),
 
           // Description
-          if (story.description.isNotEmpty) ...[
-            Text(
-              'Mô tả:',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-              ),
+          if (story.displayDescription.isNotEmpty) ...[
+            Row(
+              children: [
+                Text(
+                  'Mô tả:',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (story.isTranslated) ...[
+                  SizedBox(width: 8.w),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4.r),
+                      border: Border.all(color: Colors.green, width: 1),
+                    ),
+                    child: Text(
+                      'Đã dịch',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             SizedBox(height: 8.h),
             Text(
-              story.description,
+              story.displayDescription,
               style: TextStyle(fontSize: 14.sp),
             ),
             SizedBox(height: 20.h),
@@ -593,6 +641,9 @@ class StoryDetailView extends GetView<StoryDetailController> {
   }
 
   void _showMoreOptions() {
+    final story = controller.story.value;
+    if (story == null) return;
+
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(20.w),
@@ -603,6 +654,27 @@ class StoryDetailView extends GetView<StoryDetailController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Translate option for Syosetu stories
+            if (story.canBeTranslated)
+              Obx(() => ListTile(
+                leading: controller.isTranslating.value
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                      )
+                    : const Icon(Iconsax.translate, color: Colors.blue),
+                title: Text(controller.isTranslating.value ? 'Đang dịch...' : 'Dịch sang tiếng Việt'),
+                subtitle: const Text('Dịch thông tin truyện bằng AI'),
+                enabled: !controller.isTranslating.value,
+                onTap: controller.isTranslating.value ? null : () {
+                  Get.back();
+                  controller.translateStory();
+                },
+              )),
             ListTile(
               leading: const Icon(Iconsax.refresh),
               title: const Text('Làm mới'),

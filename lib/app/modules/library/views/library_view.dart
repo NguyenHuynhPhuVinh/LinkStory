@@ -360,22 +360,46 @@ class LibraryView extends GetView<LibraryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
-        Text(
-          story.title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        // Title with translation indicator
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                story.displayTitle,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (story.isTranslated) ...[
+              SizedBox(width: 4.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(3.r),
+                ),
+                child: Text(
+                  'VN',
+                  style: TextStyle(
+                    fontSize: 8.sp,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
 
         SizedBox(height: 4.h),
 
         // Author
         Text(
-          story.author,
+          story.displayAuthor,
           style: TextStyle(
             fontSize: 14.sp,
             color: Colors.grey[600],
@@ -519,6 +543,12 @@ class LibraryView extends GetView<LibraryController> {
               case 'details':
                 _showStoryDetails(story);
                 break;
+              case 'translate':
+                // Don't translate if already translating this story
+                if (!(controller.isTranslating.value && controller.translatingStoryId.value == story.id)) {
+                  _translateStory(story);
+                }
+                break;
               case 'remove':
                 _confirmRemoveStory(story);
                 break;
@@ -545,6 +575,31 @@ class LibraryView extends GetView<LibraryController> {
                 ],
               ),
             ),
+            // Show translate option only for Syosetu stories that haven't been translated
+            if (story.canBeTranslated)
+              PopupMenuItem(
+                value: 'translate',
+                child: Obx(() => Row(
+                  children: [
+                    if (controller.isTranslating.value && controller.translatingStoryId.value == story.id) ...[
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Đang dịch...', style: TextStyle(color: Colors.grey)),
+                    ] else ...[
+                      Icon(Iconsax.translate, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Dịch sang tiếng Việt', style: TextStyle(color: Colors.blue)),
+                    ],
+                  ],
+                )),
+              ),
             const PopupMenuItem(
               value: 'remove',
               child: Row(
@@ -598,7 +653,7 @@ class LibraryView extends GetView<LibraryController> {
         'name': story.sourceWebsite,
         'url': story.sourceUrl,
         'icon': '',
-        'description': story.title,
+        'description': story.displayTitle,
       }
     });
   }
@@ -608,12 +663,17 @@ class LibraryView extends GetView<LibraryController> {
     Get.toNamed('/story-detail', arguments: story);
   }
 
+  void _translateStory(Story story) {
+    // Call controller method to translate story
+    controller.translateStory(story);
+  }
+
 
   void _confirmRemoveStory(Story story) {
     Get.dialog(
       AlertDialog(
         title: const Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc chắn muốn xóa truyện "${story.title}" khỏi thư viện?'),
+        content: Text('Bạn có chắc chắn muốn xóa truyện "${story.displayTitle}" khỏi thư viện?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
