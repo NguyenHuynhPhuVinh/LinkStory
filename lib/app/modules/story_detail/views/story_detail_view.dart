@@ -575,6 +575,16 @@ class StoryDetailView extends GetView<StoryDetailController> {
                             color: Colors.orange,
                           ),
                         ],
+
+                        // Translation indicator
+                        if (chapter.isTranslated) ...[
+                          SizedBox(width: 8.w),
+                          Icon(
+                            Iconsax.translate5,
+                            size: 12.sp,
+                            color: Colors.green,
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -608,9 +618,36 @@ class StoryDetailView extends GetView<StoryDetailController> {
                         case 'mark_unread':
                           controller.markChapterAsUnread(chapter);
                           break;
+                        case 'translate':
+                          controller.translateChapter(chapter);
+                          break;
                       }
                     },
                     itemBuilder: (context) => [
+                      // Translate option for Syosetu stories with content
+                      if (controller.isSyosetuStory && chapter.hasContent && !chapter.isTranslated)
+                        PopupMenuItem(
+                          value: 'translate',
+                          child: Obx(() {
+                            final isTranslating = controller.isChapterTranslating(chapter.id);
+                            return Row(
+                              children: [
+                                isTranslating
+                                    ? SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                        ),
+                                      )
+                                    : Icon(Iconsax.translate, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text(isTranslating ? 'Đang dịch...' : 'Dịch chương'),
+                              ],
+                            );
+                          }),
+                        ),
                       if (!chapter.isRead)
                         const PopupMenuItem(
                           value: 'mark_read',

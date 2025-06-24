@@ -6,12 +6,14 @@ import '../../../data/models/chapter_model.dart';
 import '../../../data/services/library_service.dart';
 import '../../../data/services/chapter_service.dart';
 import '../../../data/services/webview_scraper_service.dart';
+import '../../../data/services/chapter_translation_service.dart';
 import '../../story_detail/controllers/story_detail_controller.dart';
 
 class ReadingController extends GetxController {
   late final LibraryService _libraryService;
   late final ChapterService _chapterService;
   late final WebViewScraperService _scraperService;
+  late final ChapterTranslationService _chapterTranslationService;
   
   // Observable states
   final Rx<Story?> story = Rx<Story?>(null);
@@ -26,7 +28,7 @@ class ReadingController extends GetxController {
   final RxDouble lineHeight = 1.5.obs;
   final RxString fontFamily = 'Default'.obs;
   final RxBool isDarkMode = false.obs;
-  
+
   // Controllers
   final ScrollController scrollController = ScrollController();
   
@@ -38,6 +40,7 @@ class ReadingController extends GetxController {
     _libraryService = Get.find<LibraryService>();
     _chapterService = Get.find<ChapterService>();
     _scraperService = WebViewScraperService();
+    _chapterTranslationService = Get.find<ChapterTranslationService>();
     
     // Get chapter from arguments
     final args = Get.arguments;
@@ -108,8 +111,9 @@ class ReadingController extends GetxController {
 
       // Check if chapter already has content
       if (currentChapter.value!.hasContent) {
-        chapterContent.value = currentChapter.value!.content;
-        print('✅ Loaded cached content for: ${currentChapter.value!.title} (${currentChapter.value!.content.length} chars)');
+        // Hiển thị nội dung (ưu tiên bản dịch nếu có)
+        chapterContent.value = currentChapter.value!.displayContent;
+        print('✅ Loaded cached content for: ${currentChapter.value!.title} (${currentChapter.value!.displayContent.length} chars)');
       } else {
         print('❌ No cached content, need to scrape: ${currentChapter.value!.title}');
         // Need to scrape content
@@ -156,7 +160,7 @@ class ReadingController extends GetxController {
         );
         
         chapterContent.value = content;
-        
+
         Get.snackbar(
           'Thành công',
           'Đã tải nội dung chương',
@@ -339,10 +343,42 @@ class ReadingController extends GetxController {
   // Get chapter navigation info
   String get chapterNavigation {
     if (allChapters.isEmpty || currentChapter.value == null) return '';
-    
+
     final currentIndex = allChapters.indexWhere((c) => c.id == currentChapter.value!.id);
     if (currentIndex == -1) return '';
-    
+
     return '${currentIndex + 1}/${allChapters.length}';
+  }
+
+  // Kiểm tra xem có phải truyện Syosetu không
+  bool get isSyosetuStory {
+    return _chapterTranslationService.isSyosetuStory(story.value);
+  }
+
+  // Kiểm tra xem chương có đang được dịch không
+  bool get isTranslating {
+    return currentChapter.value != null &&
+           _chapterTranslationService.isChapterTranslating(currentChapter.value!.id);
+  }
+
+  // Dịch chương hiện tại
+  Future<void> translateCurrentChapter() async {
+    if (currentChapter.value == null) return;
+
+    final success = await _chapterTranslationService.translateChapter(
+      currentChapter.value!,
+      story.value,
+    );
+
+    if (success) {
+      // Lấy lại chapter đã cập nhật từ database
+      final updatedChapter = _chapterTranslationService.getUpdatedChapter(currentChapter.value!.id);
+      if (updatedChapter != null) {
+        currentChapter.value = updatedChapter;
+
+        // Reload nội dung hiển thị
+        chapterContent.value = updatedChapter.displayContent;
+      }
+    }
   }
 }

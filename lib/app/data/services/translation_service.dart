@@ -247,6 +247,83 @@ HƯỚNG DẪN DỊCH:
     }
   }
 
+  // Translate chapter content and title
+  Future<Map<String, String>?> translateChapter({
+    required String title,
+    required String content,
+  }) async {
+    if (!_isInitialized) {
+      print('❌ Translation Service not initialized');
+      return null;
+    }
+
+    try {
+      // Configure safety settings for chapter translation
+      final safetySettings = [
+        SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none, null),
+        SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none, null),
+        SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none, null),
+        SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none, null),
+      ];
+
+      // Create model for chapter translation
+      final chapterModel = FirebaseAI.googleAI().generativeModel(
+        model: 'gemini-2.5-flash',
+        systemInstruction: Content.system(
+          'Bạn là chuyên gia dịch light novel từ tiếng Nhật sang tiếng Việt. '
+          'Hãy dịch cả tiêu đề và nội dung chương một cách tự nhiên, giữ nguyên format và cấu trúc. '
+          'Sử dụng thuật ngữ phù hợp với thể loại light novel. '
+          'Trả về JSON với format: {"title": "tiêu đề đã dịch", "content": "nội dung đã dịch"}'
+        ),
+        safetySettings: safetySettings,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 8192, // Tăng limit cho nội dung dài
+        ),
+      );
+
+      print('🔄 Translating chapter: $title');
+
+      // Chia nhỏ nội dung nếu quá dài
+      if (content.length > 10000) {
+        return await _translateLongChapter(chapterModel, title, content);
+      }
+
+      final prompt = '''
+Dịch tiêu đề và nội dung chương sau từ tiếng Nhật sang tiếng Việt:
+
+TIÊU ĐỀ: $title
+
+NỘI DUNG:
+$content
+
+Hãy dịch tự nhiên và giữ nguyên format. Trả về JSON với format chính xác.
+''';
+
+      final response = await chapterModel.generateContent([Content.text(prompt)]);
+
+      if (response.text == null) {
+        print('❌ No response from chapter translation service');
+        return null;
+      }
+
+      final result = _parseChapterTranslationResponse(response.text!);
+      if (result != null) {
+        print('✅ Chapter translation completed successfully');
+        return result;
+      } else {
+        print('❌ Failed to parse chapter translation response');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error during chapter translation: $e');
+      return null;
+    }
+  }
+
   // Quick translate method for single text (using simple text model)
   Future<String?> translateText(
     String text, {
@@ -298,5 +375,104 @@ HƯỚNG DẪN DỊCH:
       print('❌ Error translating text: $e');
       return null;
     }
+  }
+
+  // Translate long chapter by splitting into chunks
+  Future<Map<String, String>?> _translateLongChapter(
+    GenerativeModel model,
+    String title,
+    String content
+  ) async {
+    try {
+      print('📄 Translating long chapter in chunks...');
+
+      // Dịch tiêu đề trước
+      final titlePrompt = 'Dịch tiêu đề chương này từ tiếng Nhật sang tiếng Việt: "$title"';
+      final titleResponse = await model.generateContent([Content.text(titlePrompt)]);
+      final translatedTitle = titleResponse.text?.trim().replaceAll('"', '') ?? title;
+
+      // Chia nội dung thành các đoạn
+      final chunks = _splitContentIntoChunks(content, 8000);
+      final translatedChunks = <String>[];
+
+      for (int i = 0; i < chunks.length; i++) {
+        print('🔄 Translating chunk ${i + 1}/${chunks.length}');
+
+        final chunkPrompt = '''
+Dịch đoạn văn sau từ tiếng Nhật sang tiếng Việt. Giữ nguyên format và cấu trúc:
+
+${chunks[i]}
+
+Chỉ trả về nội dung đã dịch, không thêm giải thích.
+''';
+
+        final chunkResponse = await model.generateContent([Content.text(chunkPrompt)]);
+        if (chunkResponse.text != null) {
+          translatedChunks.add(chunkResponse.text!.trim());
+        } else {
+          translatedChunks.add(chunks[i]); // Fallback to original if translation fails
+        }
+
+        // Delay nhỏ để tránh rate limit
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      final translatedContent = translatedChunks.join('\n\n');
+
+      return {
+        'title': translatedTitle,
+        'content': translatedContent,
+      };
+    } catch (e) {
+      print('❌ Error translating long chapter: $e');
+      return null;
+    }
+  }
+
+  // Split content into manageable chunks
+  List<String> _splitContentIntoChunks(String content, int maxChunkSize) {
+    final chunks = <String>[];
+    final paragraphs = content.split('\n');
+
+    String currentChunk = '';
+    for (final paragraph in paragraphs) {
+      if (currentChunk.length + paragraph.length + 1 > maxChunkSize) {
+        if (currentChunk.isNotEmpty) {
+          chunks.add(currentChunk.trim());
+          currentChunk = paragraph;
+        } else {
+          // Paragraph itself is too long, split it
+          chunks.add(paragraph);
+        }
+      } else {
+        if (currentChunk.isNotEmpty) {
+          currentChunk += '\n$paragraph';
+        } else {
+          currentChunk = paragraph;
+        }
+      }
+    }
+
+    if (currentChunk.isNotEmpty) {
+      chunks.add(currentChunk.trim());
+    }
+
+    return chunks;
+  }
+
+  // Parse chapter translation response
+  Map<String, String>? _parseChapterTranslationResponse(String response) {
+    try {
+      final jsonResponse = json.decode(response);
+      if (jsonResponse is Map<String, dynamic>) {
+        return {
+          'title': jsonResponse['title']?.toString() ?? '',
+          'content': jsonResponse['content']?.toString() ?? '',
+        };
+      }
+    } catch (e) {
+      print('❌ Error parsing chapter translation response: $e');
+    }
+    return null;
   }
 }

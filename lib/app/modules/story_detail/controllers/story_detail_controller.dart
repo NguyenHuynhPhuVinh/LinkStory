@@ -5,12 +5,14 @@ import '../../../data/models/chapter_model.dart';
 import '../../../data/services/library_service.dart';
 import '../../../data/services/chapter_service.dart';
 import '../../../data/services/story_translation_service.dart';
+import '../../../data/services/chapter_translation_service.dart';
 import '../../library/controllers/library_controller.dart';
 
 class StoryDetailController extends GetxController {
   late final LibraryService _libraryService;
   late final ChapterService _chapterService;
   late final StoryTranslationService _storyTranslationService;
+  late final ChapterTranslationService _chapterTranslationService;
   
   // Observable states
   final Rx<Story?> story = Rx<Story?>(null);
@@ -20,6 +22,7 @@ class StoryDetailController extends GetxController {
   final RxString searchQuery = ''.obs;
   final RxString selectedFilter = 'all'.obs; // all, read, unread
   final RxBool showSearch = false.obs;
+
 
   // Flag to prevent auto-refresh during translation
   bool _isTranslating = false;
@@ -35,6 +38,7 @@ class StoryDetailController extends GetxController {
     _libraryService = Get.find<LibraryService>();
     _chapterService = Get.find<ChapterService>();
     _storyTranslationService = StoryTranslationService();
+    _chapterTranslationService = Get.find<ChapterTranslationService>();
 
     // Initialize translation service
     _storyTranslationService.init();
@@ -318,6 +322,29 @@ class StoryDetailController extends GetxController {
   // Get chapter statistics
   Map<String, dynamic> getChapterStats() {
     return _chapterService.getChapterStats(story.value?.id ?? '');
+  }
+
+  // Kiểm tra xem có phải truyện Syosetu không
+  bool get isSyosetuStory {
+    return _chapterTranslationService.isSyosetuStory(story.value);
+  }
+
+  // Kiểm tra xem chương có đang được dịch không
+  bool isChapterTranslating(String chapterId) {
+    return _chapterTranslationService.isChapterTranslating(chapterId);
+  }
+
+  // Dịch một chương cụ thể
+  Future<void> translateChapter(Chapter chapter) async {
+    final success = await _chapterTranslationService.translateChapter(
+      chapter,
+      story.value,
+    );
+
+    if (success) {
+      // Reload chapters để cập nhật UI
+      await loadChapters();
+    }
   }
   
   // Continue reading (next unread chapter)

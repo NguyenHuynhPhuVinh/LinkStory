@@ -46,6 +46,40 @@ class ReadingView extends GetView<ReadingController> {
         ],
       )),
       actions: [
+        // Nút dịch chỉ hiển thị cho truyện Syosetu
+        Obx(() {
+          if (controller.isSyosetuStory && controller.currentChapter.value != null) {
+            return IconButton(
+              icon: controller.isTranslating
+                  ? SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          controller.isDarkMode.value ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      controller.currentChapter.value!.isTranslated
+                          ? Iconsax.translate5
+                          : Iconsax.translate,
+                      size: 20.sp,
+                      color: controller.currentChapter.value!.isTranslated
+                          ? Colors.green
+                          : null,
+                    ),
+              onPressed: controller.isTranslating
+                  ? null
+                  : controller.translateCurrentChapter,
+              tooltip: controller.currentChapter.value!.isTranslated
+                  ? 'Đã dịch'
+                  : 'Dịch chương',
+            );
+          }
+          return const SizedBox.shrink();
+        }),
         IconButton(
           icon: Icon(
             controller.isDarkMode.value ? Iconsax.sun_1 : Iconsax.moon,

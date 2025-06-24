@@ -32,13 +32,17 @@ class ChapterAdapter extends TypeAdapter<Chapter> {
       wordCount: fields[12] as int,
       hasImages: fields[13] as bool,
       metadata: (fields[14] as Map).cast<String, dynamic>(),
+      translatedTitle: fields[15] as String?,
+      translatedContent: fields[16] as String?,
+      isTranslated: fields[17] as bool,
+      translatedAt: fields[18] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Chapter obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -68,7 +72,15 @@ class ChapterAdapter extends TypeAdapter<Chapter> {
       ..writeByte(13)
       ..write(obj.hasImages)
       ..writeByte(14)
-      ..write(obj.metadata);
+      ..write(obj.metadata)
+      ..writeByte(15)
+      ..write(obj.translatedTitle)
+      ..writeByte(16)
+      ..write(obj.translatedContent)
+      ..writeByte(17)
+      ..write(obj.isTranslated)
+      ..writeByte(18)
+      ..write(obj.translatedAt);
   }
 
   @override

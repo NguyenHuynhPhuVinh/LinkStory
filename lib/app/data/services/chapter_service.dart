@@ -123,6 +123,40 @@ class ChapterService {
     }
   }
 
+  // Cập nhật nội dung đã dịch của chapter
+  Future<void> updateChapterTranslation(
+    String chapterId,
+    String translatedTitle,
+    String translatedContent
+  ) async {
+    final chapter = getChapterById(chapterId);
+    if (chapter != null) {
+      final updatedChapter = chapter.copyWith(
+        translatedTitle: translatedTitle,
+        translatedContent: translatedContent,
+        isTranslated: true,
+        translatedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      await updateChapter(updatedChapter);
+    }
+  }
+
+  // Xóa bản dịch của chapter
+  Future<void> removeChapterTranslation(String chapterId) async {
+    final chapter = getChapterById(chapterId);
+    if (chapter != null) {
+      final updatedChapter = chapter.copyWith(
+        translatedTitle: null,
+        translatedContent: null,
+        isTranslated: false,
+        translatedAt: null,
+        updatedAt: DateTime.now(),
+      );
+      await updateChapter(updatedChapter);
+    }
+  }
+
   // Xóa chapter
   Future<void> removeChapter(String id) async {
     await _chapterBox?.delete(id);

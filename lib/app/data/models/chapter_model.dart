@@ -49,6 +49,19 @@ class Chapter extends HiveObject {
   @HiveField(14)
   Map<String, dynamic> metadata; // Thông tin bổ sung
 
+  // Translation fields
+  @HiveField(15)
+  String? translatedTitle; // Tiêu đề đã dịch
+
+  @HiveField(16)
+  String? translatedContent; // Nội dung đã dịch
+
+  @HiveField(17)
+  bool isTranslated; // Đã dịch hay chưa
+
+  @HiveField(18)
+  DateTime? translatedAt; // Thời gian dịch
+
   Chapter({
     required this.id,
     required this.storyId,
@@ -65,6 +78,11 @@ class Chapter extends HiveObject {
     this.wordCount = 0,
     this.hasImages = false,
     this.metadata = const {},
+    // Translation fields
+    this.translatedTitle,
+    this.translatedContent,
+    this.isTranslated = false,
+    this.translatedAt,
   })  : publishedAt = publishedAt ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -86,6 +104,11 @@ class Chapter extends HiveObject {
     int? wordCount,
     bool? hasImages,
     Map<String, dynamic>? metadata,
+    // Translation fields
+    String? translatedTitle,
+    String? translatedContent,
+    bool? isTranslated,
+    DateTime? translatedAt,
   }) {
     return Chapter(
       id: id ?? this.id,
@@ -103,6 +126,11 @@ class Chapter extends HiveObject {
       wordCount: wordCount ?? this.wordCount,
       hasImages: hasImages ?? this.hasImages,
       metadata: metadata ?? this.metadata,
+      // Translation fields
+      translatedTitle: translatedTitle ?? this.translatedTitle,
+      translatedContent: translatedContent ?? this.translatedContent,
+      isTranslated: isTranslated ?? this.isTranslated,
+      translatedAt: translatedAt ?? this.translatedAt,
     );
   }
 
@@ -124,6 +152,11 @@ class Chapter extends HiveObject {
       'wordCount': wordCount,
       'hasImages': hasImages,
       'metadata': metadata,
+      // Translation fields
+      'translatedTitle': translatedTitle,
+      'translatedContent': translatedContent,
+      'isTranslated': isTranslated,
+      'translatedAt': translatedAt?.toIso8601String(),
     };
   }
 
@@ -145,6 +178,11 @@ class Chapter extends HiveObject {
       wordCount: json['wordCount'] ?? 0,
       hasImages: json['hasImages'] ?? false,
       metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
+      // Translation fields
+      translatedTitle: json['translatedTitle'],
+      translatedContent: json['translatedContent'],
+      isTranslated: json['isTranslated'] ?? false,
+      translatedAt: json['translatedAt'] != null ? DateTime.parse(json['translatedAt']) : null,
     );
   }
 
@@ -164,23 +202,37 @@ class Chapter extends HiveObject {
 
   // Helper methods
   String get displayTitle {
-    if (volumeTitle.isNotEmpty && title.isNotEmpty) {
-      return '$volumeTitle - $title';
-    } else if (title.isNotEmpty) {
-      return title;
+    // Ưu tiên hiển thị bản dịch nếu có
+    final titleToShow = (isTranslated && translatedTitle != null) ? translatedTitle! : title;
+
+    if (volumeTitle.isNotEmpty && titleToShow.isNotEmpty) {
+      return '$volumeTitle - $titleToShow';
+    } else if (titleToShow.isNotEmpty) {
+      return titleToShow;
     } else {
       return 'Chương $chapterNumber';
     }
   }
 
   String get shortTitle {
-    if (title.length > 50) {
-      return '${title.substring(0, 47)}...';
+    // Ưu tiên hiển thị bản dịch nếu có
+    final titleToShow = (isTranslated && translatedTitle != null) ? translatedTitle! : title;
+
+    if (titleToShow.length > 50) {
+      return '${titleToShow.substring(0, 47)}...';
     }
-    return title;
+    return titleToShow;
   }
 
   bool get hasContent => content.isNotEmpty;
+
+  // Lấy nội dung hiển thị (ưu tiên bản dịch nếu có)
+  String get displayContent {
+    if (isTranslated && translatedContent != null && translatedContent!.isNotEmpty) {
+      return translatedContent!;
+    }
+    return content;
+  }
 
   String get readingTimeEstimate {
     if (wordCount == 0) return 'Chưa xác định';
