@@ -265,10 +265,11 @@ class ReadingController extends GetxController {
   // Navigate to next chapter
   Future<void> goToNextChapter() async {
     if (currentChapter.value == null || allChapters.isEmpty) return;
-    
+
     final currentIndex = allChapters.indexWhere((c) => c.id == currentChapter.value!.id);
     if (currentIndex != -1 && currentIndex < allChapters.length - 1) {
       final nextChapter = allChapters[currentIndex + 1];
+      print('📚 Navigating to next chapter: ${nextChapter.title}');
       await _navigateToChapter(nextChapter);
     } else {
       Get.snackbar(
@@ -282,10 +283,11 @@ class ReadingController extends GetxController {
   // Navigate to previous chapter
   Future<void> goToPreviousChapter() async {
     if (currentChapter.value == null || allChapters.isEmpty) return;
-    
+
     final currentIndex = allChapters.indexWhere((c) => c.id == currentChapter.value!.id);
     if (currentIndex > 0) {
       final previousChapter = allChapters[currentIndex - 1];
+      print('📚 Navigating to previous chapter: ${previousChapter.title}');
       await _navigateToChapter(previousChapter);
     } else {
       Get.snackbar(
@@ -320,6 +322,10 @@ class ReadingController extends GetxController {
       curve: Curves.easeInOut,
     );
     await loadChapterContent();
+
+    // Track reading when navigating to new chapter
+    await _trackChapterReadNow();
+
     await markChapterAsRead();
   }
   
@@ -502,17 +508,7 @@ class ReadingController extends GetxController {
     try {
       print('📚 Tracking chapter reading start: ${story.value!.title} - ${currentChapter.value!.title}');
 
-      // Check if we already have a recent history entry for this chapter
-      final existingHistory = _historyService.getHistoryByStoryAndChapter(
-        story.value!.id,
-        currentChapter.value!.id
-      );
-
-      // Only create new entry if no recent entry exists (within last hour)
-      final shouldCreateNew = existingHistory == null ||
-          DateTime.now().difference(existingHistory.readAt).inHours > 1;
-
-      if (shouldCreateNew) {
+      // Always create new entry when switching chapters to track reading progress
         // Create reading history entry for current reading position
         final historyEntry = ReadingHistory(
           id: '${story.value!.id}_${currentChapter.value!.id}_${DateTime.now().millisecondsSinceEpoch}',
@@ -533,9 +529,6 @@ class ReadingController extends GetxController {
 
         await _historyService.addHistory(historyEntry);
         print('📚 Successfully tracked chapter reading start');
-      } else {
-        print('📚 Recent history entry exists, skipping duplicate');
-      }
     } catch (e) {
       print('📚 Error tracking chapter read: $e');
     }

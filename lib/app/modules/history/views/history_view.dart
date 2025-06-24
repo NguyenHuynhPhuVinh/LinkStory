@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../controllers/history_controller.dart';
 import '../../../data/services/theme_service.dart';
@@ -177,8 +178,10 @@ class HistoryView extends GetView<HistoryController> {
   }
 
   Widget _buildHistoryList() {
-    return RefreshIndicator(
+    return LiquidPullToRefresh(
       onRefresh: controller.refreshHistory,
+      color: Theme.of(Get.context!).colorScheme.primary,
+      backgroundColor: Theme.of(Get.context!).scaffoldBackgroundColor,
       child: ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         itemCount: controller.filteredHistory.length,
@@ -187,8 +190,6 @@ class HistoryView extends GetView<HistoryController> {
           return HistoryItemWidget(
             history: history,
             onTap: () => controller.continueReading(history),
-            onDelete: () => controller.deleteHistoryItem(history.id),
-            onNavigateToStory: () => controller.navigateToStoryDetail(history.storyId),
           );
         },
       ),

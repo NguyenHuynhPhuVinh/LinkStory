@@ -2,9 +2,11 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/reading_history_model.dart';
 import '../../../data/models/story_model.dart';
+import '../../../data/models/chapter_model.dart';
 import '../../../data/services/history_service.dart';
 import '../../../data/services/library_service.dart';
 import '../../../data/services/chapter_service.dart';
+import '../../story_detail/controllers/story_detail_controller.dart';
 
 class HistoryController extends GetxController {
   // Services
@@ -296,7 +298,43 @@ class HistoryController extends GetxController {
         // Get the actual chapter object from ChapterService
         try {
           final chapterService = Get.find<ChapterService>();
-          final chapter = chapterService.getChapterById(history.chapterId!);
+
+          // Debug: Check how many chapters exist for this story
+          final storyChapters = chapterService.getChaptersByStoryId(
+            history.storyId,
+          );
+          print(
+            '📚 Total chapters for story ${history.storyId}: ${storyChapters.length}',
+          );
+          if (storyChapters.isNotEmpty) {
+            print(
+              '📚 Available chapters: ${storyChapters.map((c) => '${c.chapterNumber}:${c.title}').join(', ')}',
+            );
+          }
+
+          // First try to find by exact ID
+          Chapter? chapter = chapterService.getChapterById(history.chapterId!);
+          print('📚 Found by ID: ${chapter?.title}');
+
+          // If not found by ID, try to find by story and chapter number
+          if (chapter == null && history.chapterNumber != null) {
+            chapter = storyChapters
+                .where((c) => c.chapterNumber == history.chapterNumber)
+                .firstOrNull;
+            print('📚 Found chapter by number: ${chapter?.title}');
+          }
+
+          // If still not found, try to find by title
+          if (chapter == null && history.chapterTitle != null) {
+            chapter = storyChapters
+                .where(
+                  (c) =>
+                      c.title == history.chapterTitle ||
+                      c.displayTitle == history.chapterTitle,
+                )
+                .firstOrNull;
+            print('📚 Found chapter by title: ${chapter?.title}');
+          }
 
           if (chapter != null) {
             // Navigate directly to reading page with chapter object
@@ -308,8 +346,20 @@ class HistoryController extends GetxController {
               '📚 Navigating to chapter: ${history.chapterTitle} of story: ${history.storyTitle}',
             );
           } else {
-            print('📚 Chapter not found: ${history.chapterId}');
-            Get.snackbar('Lỗi', 'Không tìm thấy chương "${history.chapterTitle}"');
+            print(
+              '📚 Chapter not found with ID: ${history.chapterId}, number: ${history.chapterNumber}, title: ${history.chapterTitle}',
+            );
+
+            // If no chapters exist, try to load them automatically
+            if (storyChapters.isEmpty) {
+              print('📚 No chapters found, trying to auto-load chapters...');
+              _autoLoadChaptersAndNavigate(story, history);
+            } else {
+              Get.snackbar(
+                'Lỗi',
+                'Không tìm thấy chương "${history.chapterTitle}".\nChương có thể đã bị xóa hoặc thay đổi.',
+              );
+            }
           }
         } catch (e) {
           print('📚 Error getting chapter: $e');
@@ -328,6 +378,78 @@ class HistoryController extends GetxController {
         duration: const Duration(seconds: 4),
         snackPosition: SnackPosition.BOTTOM,
       );
+    }
+  }
+
+  // Auto-load chapters and navigate
+  Future<void> _autoLoadChaptersAndNavigate(
+    Story story,
+    ReadingHistory history,
+  ) async {
+    try {
+      Get.snackbar(
+        'Đang tải...',
+        'Đang tải thông tin chương...',
+        duration: const Duration(seconds: 3),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+
+      // Navigate to story detail to trigger chapter loading
+      print('📚 Auto-loading chapters for story: ${story.title}');
+
+      // Navigate to story detail to trigger chapter loading
+      Get.toNamed('/story-detail', arguments: story);
+
+      // Wait a bit for the story detail to load chapters
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      // After loading, try to find the chapter again
+      final chapterService = Get.find<ChapterService>();
+      final storyChapters = chapterService.getChaptersByStoryId(
+        history.storyId,
+      );
+      print('📚 After navigation to story detail, found ${storyChapters.length} chapters');
+
+      Chapter? chapter;
+      if (history.chapterNumber != null) {
+        chapter = storyChapters
+            .where((c) => c.chapterNumber == history.chapterNumber)
+            .firstOrNull;
+        print('📚 Found by number: ${chapter?.title}');
+      }
+
+      if (chapter == null && history.chapterTitle != null) {
+        chapter = storyChapters
+            .where(
+              (c) =>
+                  c.title == history.chapterTitle ||
+                  c.displayTitle == history.chapterTitle,
+            )
+            .firstOrNull;
+        print('📚 Found by title: ${chapter?.title}');
+      }
+
+      if (chapter != null) {
+        // Navigate directly to reading page, replacing the story detail page
+        Get.offNamed(
+          '/reading',
+          arguments: {'story': story, 'chapter': chapter},
+        );
+        print(
+          '📚 Successfully auto-loaded and navigated to chapter: ${chapter.title}',
+        );
+      } else {
+        print('📚 Still no chapter found after auto-load');
+        // Stay on story detail page if chapter not found
+        Get.snackbar(
+          'Thông báo',
+          'Đã tải thông tin truyện. Vui lòng chọn chương để đọc.',
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } catch (e) {
+      print('📚 Error auto-loading chapters: $e');
+      Get.snackbar('Lỗi', 'Không thể tải thông tin chương: $e');
     }
   }
 
