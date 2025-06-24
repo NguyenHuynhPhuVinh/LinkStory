@@ -5,6 +5,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../controllers/reading_controller.dart';
+import '../../../data/services/theme_service.dart';
 
 class ReadingView extends GetView<ReadingController> {
   const ReadingView({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class ReadingView extends GetView<ReadingController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
+      key: ValueKey('${Theme.of(Get.context!).brightness}_${ThemeService.to.rebuildTrigger.value}'),
       backgroundColor: Theme.of(Get.context!).scaffoldBackgroundColor,
       appBar: controller.showAppBar.value ? _buildAppBar() : null,
       body: _buildBody(),
@@ -21,8 +23,8 @@ class ReadingView extends GetView<ReadingController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: controller.isDarkMode.value ? Colors.grey[900] : Colors.white,
-      foregroundColor: controller.isDarkMode.value ? Colors.white : Colors.black,
+      backgroundColor: Theme.of(Get.context!).scaffoldBackgroundColor,
+      foregroundColor: Theme.of(Get.context!).colorScheme.onSurface,
       elevation: 1,
       title: Obx(() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +40,7 @@ class ReadingView extends GetView<ReadingController> {
               controller.story.value!.title,
               style: TextStyle(
                 fontSize: 12.sp,
-                color: Colors.grey[600],
+                color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -57,7 +59,7 @@ class ReadingView extends GetView<ReadingController> {
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          controller.isDarkMode.value ? Colors.white : Colors.black,
+                          Theme.of(Get.context!).colorScheme.onSurface,
                         ),
                       ),
                     )
@@ -126,16 +128,16 @@ class ReadingView extends GetView<ReadingController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            color: controller.isDarkMode.value ? Colors.white : Colors.blue,
+            color: Theme.of(Get.context!).colorScheme.primary,
           ),
           SizedBox(height: 16.h),
           Obx(() => Text(
-            controller.isScrapingContent.value 
+            controller.isScrapingContent.value
                 ? 'Đang scrape nội dung chương...'
                 : 'Đang tải nội dung...',
             style: TextStyle(
               fontSize: 16.sp,
-              color: controller.isDarkMode.value ? Colors.white : Colors.black,
+              color: Theme.of(Get.context!).colorScheme.onSurface,
             ),
           )),
         ],
@@ -219,10 +221,10 @@ class ReadingView extends GetView<ReadingController> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: controller.isDarkMode.value ? Colors.grey[900] : Colors.white,
+        color: Theme.of(Get.context!).scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
-            color: Colors.grey[300]!,
+            color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.2),
             width: 0.5,
           ),
         ),
@@ -271,7 +273,7 @@ class ReadingView extends GetView<ReadingController> {
       Container(
         padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
-          color: controller.isDarkMode.value ? Colors.grey[900] : Colors.white,
+          color: Theme.of(Get.context!).scaffoldBackgroundColor,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
@@ -283,7 +285,7 @@ class ReadingView extends GetView<ReadingController> {
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
-                color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                color: Theme.of(Get.context!).colorScheme.onSurface,
               ),
             ),
             
@@ -295,7 +297,7 @@ class ReadingView extends GetView<ReadingController> {
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w500,
-                color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                color: Theme.of(Get.context!).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8.h),
@@ -305,7 +307,7 @@ class ReadingView extends GetView<ReadingController> {
                   onPressed: controller.decreaseFontSize,
                   icon: Icon(
                     Iconsax.minus,
-                    color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                    color: Theme.of(Get.context!).colorScheme.onSurface,
                   ),
                 ),
                 Expanded(
@@ -321,7 +323,7 @@ class ReadingView extends GetView<ReadingController> {
                   onPressed: controller.increaseFontSize,
                   icon: Icon(
                     Iconsax.add,
-                    color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                    color: Theme.of(Get.context!).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -335,7 +337,7 @@ class ReadingView extends GetView<ReadingController> {
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w500,
-                color: controller.isDarkMode.value ? Colors.white : Colors.black,
+                color: Theme.of(Get.context!).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8.h),

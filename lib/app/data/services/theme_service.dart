@@ -5,9 +5,10 @@ import 'package:hive/hive.dart';
 class ThemeService extends GetxService {
   static const String _boxName = 'theme_settings';
   static const String _themeKey = 'theme_mode';
-  
+
   Box? _themeBox;
   final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
+  final RxInt rebuildTrigger = 0.obs; // Trigger để force rebuild UI
 
   static ThemeService get to => Get.find();
 
@@ -60,10 +61,11 @@ class ThemeService extends GetxService {
       }
       
       await _themeBox?.put(_themeKey, themeString);
-      
-      // Apply theme
-      Get.changeThemeMode(mode);
-      
+
+      // Force update all GetX controllers và trigger rebuild
+      Get.forceAppUpdate();
+      rebuildTrigger.value++;
+
       print('✅ Theme changed to: $mode');
     } catch (e) {
       print('❌ Error changing theme: $e');

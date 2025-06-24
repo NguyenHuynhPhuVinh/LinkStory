@@ -47,6 +47,7 @@ class LinkStoryApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return Obx(() => GetMaterialApp(
+          key: ValueKey('${ThemeService.to.themeMode.value}_${ThemeService.to.rebuildTrigger.value}'),
           title: 'LinkStory',
           theme: ThemeService.lightTheme,
           darkTheme: ThemeService.darkTheme,

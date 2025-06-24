@@ -60,6 +60,9 @@ class ThemeSettingsController extends GetxController {
       // Apply theme through ThemeService
       await _themeService.changeTheme(themeMode);
 
+      // Force rebuild all widgets by updating the app
+      await Future.delayed(const Duration(milliseconds: 100));
+
       Get.snackbar(
         'Đã thay đổi giao diện',
         'Giao diện ${appThemeMode.displayName} đã được áp dụng',

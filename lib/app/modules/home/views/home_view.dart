@@ -11,13 +11,15 @@ import '../../reader/views/reader_view.dart';
 import '../../ai/views/ai_view.dart';
 import '../../history/views/history_view.dart';
 import '../../settings/views/settings_view.dart';
+import '../../../data/services/theme_service.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() => Scaffold(
+      key: ValueKey(ThemeService.to.rebuildTrigger.value),
       body: Obx(() => IndexedStack(
         index: controller.currentIndex.value,
         children: const [
@@ -29,7 +31,7 @@ class HomeView extends GetView<HomeController> {
         ],
       )),
       bottomNavigationBar: _buildResponsiveNavBar(),
-    );
+    ));
   }
 
   Widget _buildResponsiveNavBar() {
