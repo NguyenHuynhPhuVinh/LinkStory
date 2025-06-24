@@ -7,6 +7,8 @@ import '../../../data/services/library_service.dart';
 import '../../../data/services/chapter_service.dart';
 import '../../../data/services/webview_scraper_service.dart';
 import '../../../data/services/chapter_translation_service.dart';
+import '../../../data/services/history_service.dart';
+import '../../../data/models/reading_history_model.dart';
 import '../../story_detail/controllers/story_detail_controller.dart';
 
 class ReadingController extends GetxController {
@@ -14,6 +16,7 @@ class ReadingController extends GetxController {
   late final ChapterService _chapterService;
   late final WebViewScraperService _scraperService;
   late final ChapterTranslationService _chapterTranslationService;
+  late final HistoryService _historyService;
   
   // Observable states
   final Rx<Story?> story = Rx<Story?>(null);
@@ -31,16 +34,46 @@ class ReadingController extends GetxController {
 
   // Controllers
   final ScrollController scrollController = ScrollController();
+
+  // Reading session tracking
+  String? _currentSessionId;
+  DateTime? _sessionStartTime;
+  int _sessionWordsRead = 0;
   
   @override
   void onInit() {
     super.onInit();
     
     // Get services from GetX
-    _libraryService = Get.find<LibraryService>();
-    _chapterService = Get.find<ChapterService>();
+    try {
+      _libraryService = Get.find<LibraryService>();
+    } catch (e) {
+      Get.put(LibraryService());
+      _libraryService = Get.find<LibraryService>();
+    }
+
+    try {
+      _chapterService = Get.find<ChapterService>();
+    } catch (e) {
+      Get.put(ChapterService());
+      _chapterService = Get.find<ChapterService>();
+    }
+
     _scraperService = WebViewScraperService();
-    _chapterTranslationService = Get.find<ChapterTranslationService>();
+
+    try {
+      _chapterTranslationService = Get.find<ChapterTranslationService>();
+    } catch (e) {
+      Get.put(ChapterTranslationService());
+      _chapterTranslationService = Get.find<ChapterTranslationService>();
+    }
+
+    try {
+      _historyService = Get.find<HistoryService>();
+    } catch (e) {
+      Get.put(HistoryService());
+      _historyService = Get.find<HistoryService>();
+    }
     
     // Get chapter from arguments
     final args = Get.arguments;
@@ -69,6 +102,7 @@ class ReadingController extends GetxController {
 
   @override
   void onClose() {
+    _endReadingSession();
     scrollController.dispose();
     super.onClose();
   }
@@ -90,7 +124,14 @@ class ReadingController extends GetxController {
           currentChapter.value = freshChapter;
         }
 
+        // Start reading session
+        _startReadingSession();
+
         await loadChapterContent();
+
+        // Track reading immediately when chapter is opened
+        await _trackChapterReadNow();
+
         await markChapterAsRead();
       }
     } catch (e) {
@@ -195,13 +236,13 @@ class ReadingController extends GetxController {
   // Mark chapter as read
   Future<void> markChapterAsRead() async {
     if (currentChapter.value == null) return;
-    
+
     try {
       await _chapterService.markChapterAsRead(currentChapter.value!.id);
-      
+
       // Update local chapter object
       currentChapter.value = currentChapter.value!.copyWith(isRead: true);
-      
+
       // Update story progress
       if (story.value != null) {
         final readChapters = allChapters.where((c) => c.isRead).length + 1;
@@ -209,10 +250,16 @@ class ReadingController extends GetxController {
           readChapters: readChapters,
           lastReadAt: DateTime.now(),
         );
-        
+
         await _libraryService.updateStory(updatedStory);
         story.value = updatedStory;
       }
+
+      // Track chapter read completion
+      _trackChapterContentLoaded();
+
+      // Track reading immediately when chapter is marked as read
+      await _trackChapterReadNow();
     } catch (e) {
       print('Error marking chapter as read: $e');
     }
@@ -365,6 +412,16 @@ class ReadingController extends GetxController {
   Future<void> translateCurrentChapter() async {
     if (currentChapter.value == null) return;
 
+    // Track translation action
+    if (story.value != null && _currentSessionId != null) {
+      await _historyService.trackTranslation(
+        story.value!,
+        _currentSessionId!,
+        'vi', // Vietnamese
+        chapter: currentChapter.value!,
+      );
+    }
+
     final success = await _chapterTranslationService.translateChapter(
       currentChapter.value!,
       story.value,
@@ -381,4 +438,99 @@ class ReadingController extends GetxController {
       }
     }
   }
+
+  // ==================== READING SESSION TRACKING ====================
+
+  void _startReadingSession() {
+    _currentSessionId = _historyService.generateSessionId();
+    _sessionStartTime = DateTime.now();
+    _sessionWordsRead = 0;
+    print('📚 Started reading session: $_currentSessionId');
+  }
+
+  void _endReadingSession() {
+    if (_currentSessionId != null && _sessionStartTime != null) {
+      // Calculate reading duration
+      final duration = DateTime.now().difference(_sessionStartTime!);
+
+      // Calculate reading speed (words per minute)
+      double readingSpeed = 0.0;
+      if (duration.inMinutes > 0 && _sessionWordsRead > 0) {
+        readingSpeed = _sessionWordsRead / duration.inMinutes;
+      }
+
+      // Track session end if we have meaningful data
+      if (duration.inSeconds > 10) { // Only track sessions longer than 10 seconds
+        _trackReadingSession(duration.inSeconds, readingSpeed);
+      }
+    }
+  }
+
+  Future<void> _trackReadingSession(int durationSeconds, double readingSpeed) async {
+    if (story.value == null || currentChapter.value == null || _currentSessionId == null) return;
+
+    try {
+      print('📚 Tracking reading session: ${story.value!.title} - ${currentChapter.value!.title}');
+      await _historyService.trackChapterRead(
+        story: story.value!,
+        chapter: currentChapter.value!,
+        sessionId: _currentSessionId!,
+        readingDuration: durationSeconds,
+        scrollProgress: scrollProgress.value,
+        wordsRead: _sessionWordsRead,
+        readingSpeed: readingSpeed,
+        isOffline: false, // TODO: Detect offline mode
+        translationLanguage: currentChapter.value!.isTranslated ? 'vi' : null,
+      );
+      print('📚 Successfully tracked reading session');
+    } catch (e) {
+      print('Error tracking reading session: $e');
+    }
+  }
+
+  // Track when chapter content is loaded
+  void _trackChapterContentLoaded() {
+    if (currentChapter.value != null) {
+      _sessionWordsRead = currentChapter.value!.wordCount;
+    }
+  }
+
+  // Track chapter read immediately
+  Future<void> _trackChapterReadNow() async {
+    if (story.value == null || currentChapter.value == null || _currentSessionId == null) {
+      print('📚 Cannot track - missing data: story=${story.value != null}, chapter=${currentChapter.value != null}, session=${_currentSessionId != null}');
+      return;
+    }
+
+    try {
+      print('📚 Tracking chapter read: ${story.value!.title} - ${currentChapter.value!.title}');
+
+      // Create a simple reading history entry
+      final historyEntry = ReadingHistory(
+        id: '${story.value!.id}_${currentChapter.value!.id}_${DateTime.now().millisecondsSinceEpoch}',
+        storyId: story.value!.id,
+        storyTitle: story.value!.title,
+        storyAuthor: story.value!.author,
+        storyCoverUrl: story.value!.coverImageUrl,
+        chapterId: currentChapter.value!.id,
+        chapterTitle: currentChapter.value!.title,
+        chapterNumber: currentChapter.value!.chapterNumber,
+        action: ReadingAction.read,
+        sourceWebsite: story.value!.sourceWebsite,
+        sessionId: _currentSessionId!,
+        readingDuration: _sessionStartTime != null
+            ? DateTime.now().difference(_sessionStartTime!).inSeconds
+            : 0,
+        wordsRead: _sessionWordsRead,
+        scrollProgress: scrollProgress.value,
+      );
+
+      await _historyService.addHistory(historyEntry);
+      print('📚 Successfully tracked chapter read');
+    } catch (e) {
+      print('📚 Error tracking chapter read: $e');
+    }
+  }
+
+
 }

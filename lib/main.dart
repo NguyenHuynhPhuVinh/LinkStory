@@ -7,7 +7,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'app/routes/app_pages.dart';
 import 'app/data/models/website_model.dart';
 import 'app/data/models/story_model.dart';
+import 'app/data/models/reading_history_model.dart';
 import 'app/data/services/theme_service.dart';
+import 'app/data/services/history_service.dart';
+import 'app/bindings/initial_binding.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -28,10 +31,19 @@ void main() async {
   if (!Hive.isAdapterRegistered(1)) {
     Hive.registerAdapter(StoryAdapter());
   }
+  if (!Hive.isAdapterRegistered(3)) {
+    Hive.registerAdapter(ReadingHistoryAdapter());
+  }
+  if (!Hive.isAdapterRegistered(4)) {
+    Hive.registerAdapter(ReadingActionAdapter());
+  }
 
-  // Initialize Theme Service
-  Get.put(ThemeService(), permanent: true);
+  // Initialize core services
+  InitialBinding().dependencies();
+
+  // Initialize services that need async setup
   await Get.find<ThemeService>().onInit();
+  await Get.find<HistoryService>().onInit();
 
   runApp(const LinkStoryApp());
 }
@@ -54,6 +66,7 @@ class LinkStoryApp extends StatelessWidget {
           themeMode: ThemeService.to.themeMode.value,
           initialRoute: AppPages.INITIAL,
           getPages: AppPages.routes,
+          initialBinding: InitialBinding(),
           debugShowCheckedModeBanner: false,
         ));
       },

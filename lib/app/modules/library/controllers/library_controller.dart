@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import '../../../data/models/story_model.dart';
 import '../../../data/services/library_service.dart';
 import '../../../data/services/story_translation_service.dart';
+import '../../../data/services/history_service.dart';
 
 class LibraryController extends GetxController {
-  final LibraryService _libraryService = LibraryService();
+  late final LibraryService _libraryService;
   final StoryTranslationService _storyTranslationService = StoryTranslationService();
+  late final HistoryService _historyService;
 
   // Observable states
   final RxList<Story> stories = <Story>[].obs;
@@ -22,6 +24,10 @@ class LibraryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
+    // Get services from dependency injection
+    _libraryService = Get.find<LibraryService>();
+    _historyService = Get.find<HistoryService>();
 
     // Initialize translation service
     _storyTranslationService.init();
@@ -168,11 +174,17 @@ class LibraryController extends GetxController {
   // Toggle favorite
   Future<void> toggleFavorite(Story story) async {
     try {
+      final sessionId = _historyService.generateSessionId();
+      final wasFavorite = story.isFavorite;
+
       await _libraryService.toggleFavorite(story.id);
       await loadStories(); // Reload to get updated data
 
+      // Track favorite action
+      await _historyService.trackFavorite(story, sessionId, !wasFavorite);
+
       Get.snackbar(
-        story.isFavorite ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích',
+        wasFavorite ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích',
         story.title,
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
@@ -192,8 +204,13 @@ class LibraryController extends GetxController {
   // Remove story from library
   Future<void> removeStory(Story story) async {
     try {
+      final sessionId = _historyService.generateSessionId();
+
       await _libraryService.removeStory(story.id);
       await loadStories(); // Reload to get updated data
+
+      // Track remove from library action
+      await _historyService.trackRemoveFromLibrary(story, sessionId);
 
       Get.snackbar(
         'Đã xóa',

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../library/controllers/library_controller.dart';
+import '../../history/controllers/history_controller.dart';
 
 class HomeController extends GetxController {
   // Observable cho current tab index
@@ -27,6 +28,17 @@ class HomeController extends GetxController {
       } catch (e) {
         // LibraryController might not be initialized yet
         print('LibraryController not found: $e');
+      }
+    }
+
+    // Notify history controller when switching to history tab
+    if (index == 3 && previousIndex != 3) {
+      try {
+        final historyController = Get.find<HistoryController>();
+        historyController.onTabFocused();
+      } catch (e) {
+        // HistoryController might not be initialized yet
+        print('HistoryController not found: $e');
       }
     }
   }
