@@ -48,9 +48,18 @@ class AiView extends GetView<AiController> {
           
           // Error message
           _buildErrorMessage(),
-          
-          // Input area
-          _buildInputArea(),
+
+          // Input area - chỉ hiện khi đã chọn conversation
+          Obx(() {
+            // Chỉ hiện input khi:
+            // 1. Có conversations và đã chọn conversation cụ thể
+            // 2. Không ở trạng thái welcome hoặc conversation list
+            if (controller.conversations.isNotEmpty &&
+                controller.currentConversation.value != null) {
+              return _buildInputArea();
+            }
+            return const SizedBox.shrink();
+          }),
         ],
       ),
 

@@ -311,68 +311,101 @@ class AiSettingsView extends GetView<AiSettingsController> {
   }
 
   Widget _buildGenerationParametersSection() {
-    return GFCard(
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Iconsax.setting_2, size: 20.sp),
-              SizedBox(width: 8.w),
-              Text(
-                'Tham số sinh văn bản',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 40.h,
+                  decoration: BoxDecoration(
+                    color: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    Iconsax.setting_2,
+                    color: Theme.of(Get.context!).colorScheme.primary,
+                    size: 20.sp,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tham số sinh văn bản',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Điều chỉnh cách AI tạo ra phản hồi',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
 
-          // Temperature
-          _buildSliderParameter(
-            'Temperature',
-            'Độ sáng tạo (0.0 = chính xác, 2.0 = sáng tạo)',
-            controller.temperature,
-            0.0,
-            2.0,
-            controller.updateTemperature,
-          ),
-          SizedBox(height: 16.h),
+            // Temperature
+            _buildSliderParameter(
+              'Temperature',
+              'Độ sáng tạo (0.0 = chính xác, 2.0 = sáng tạo)',
+              controller.temperature,
+              0.0,
+              2.0,
+              controller.updateTemperature,
+            ),
+            SizedBox(height: 16.h),
 
-          // Top P
-          _buildSliderParameter(
-            'Top P',
-            'Ngưỡng xác suất tích lũy (0.0 - 1.0)',
-            controller.topP,
-            0.0,
-            1.0,
-            controller.updateTopP,
-          ),
-          SizedBox(height: 16.h),
+            // Top P
+            _buildSliderParameter(
+              'Top P',
+              'Ngưỡng xác suất tích lũy (0.0 - 1.0)',
+              controller.topP,
+              0.0,
+              1.0,
+              controller.updateTopP,
+            ),
+            SizedBox(height: 16.h),
 
-          // Top K
-          _buildIntSliderParameter(
-            'Top K',
-            'Số lượng token được xem xét (1 - 100)',
-            controller.topK,
-            1,
-            100,
-            controller.updateTopK,
-          ),
-          SizedBox(height: 16.h),
+            // Top K
+            _buildIntSliderParameter(
+              'Top K',
+              'Số lượng token được xem xét (1 - 100)',
+              controller.topK,
+              1,
+              100,
+              controller.updateTopK,
+            ),
+            SizedBox(height: 16.h),
 
-          // Max Output Tokens
-          _buildIntSliderParameter(
-            'Max Output Tokens',
-            'Số token tối đa trong phản hồi (1 - 32768)',
-            controller.maxOutputTokens,
-            1,
-            32768,
-            controller.updateMaxTokens,
-          ),
-        ],
+            // Max Output Tokens
+            _buildIntSliderParameter(
+              'Max Output Tokens',
+              'Số token tối đa trong phản hồi (1 - 32768)',
+              controller.maxOutputTokens,
+              1,
+              32768,
+              controller.updateMaxTokens,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -460,81 +493,109 @@ class AiSettingsView extends GetView<AiSettingsController> {
   }
 
   Widget _buildSafetySettingsSection() {
-    return GFCard(
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Iconsax.shield_security, size: 20.sp),
-              SizedBox(width: 8.w),
-              Text(
-                'Cài đặt an toàn',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 40.h,
+                  decoration: BoxDecoration(
+                    color: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    Iconsax.shield_security,
+                    color: Theme.of(Get.context!).colorScheme.primary,
+                    size: 20.sp,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Kiểm soát nội dung có thể gây hại',
-            style: TextStyle(fontSize: 14.sp, color: Colors.grey),
-          ),
-          SizedBox(height: 16.h),
-          ...SafetyCategories.categories.asMap().entries.map((entry) {
-            final index = entry.key;
-            final category = entry.value;
-            return Container(
-              margin: EdgeInsets.only(bottom: 16.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    category['name']!,
-                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    category['description']!,
-                    style: TextStyle(fontSize: 12.sp, color: Colors.grey),
-                  ),
-                  SizedBox(height: 8.h),
-                  Obx(() => DropdownButtonFormField<String>(
-                    value: index < controller.safetySettings.length
-                        ? controller.safetySettings[index]
-                        : 'BLOCK_MEDIUM_AND_ABOVE',
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(Get.context!).colorScheme.surface,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                    ),
-                    isExpanded: true,
-                    items: SafetySettings.options.map((option) {
-                      return DropdownMenuItem<String>(
-                        value: option['id'],
-                        child: Text(
-                          option['name']!,
-                          style: TextStyle(fontSize: 14.sp),
-                          overflow: TextOverflow.ellipsis,
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cài đặt an toàn',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        controller.updateSafetySetting(index, value);
-                      }
-                    },
-                  )),
-                ],
-              ),
-            );
-          }).toList(),
-        ],
+                      ),
+                      Text(
+                        'Kiểm soát nội dung có thể gây hại',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            ...SafetyCategories.categories.asMap().entries.map((entry) {
+              final index = entry.key;
+              final category = entry.value;
+              return Container(
+                margin: EdgeInsets.only(bottom: 16.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      category['name']!,
+                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      category['description']!,
+                      style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                    ),
+                    SizedBox(height: 8.h),
+                    Obx(() => DropdownButtonFormField<String>(
+                      value: index < controller.safetySettings.length
+                          ? controller.safetySettings[index]
+                          : 'BLOCK_MEDIUM_AND_ABOVE',
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(Get.context!).colorScheme.surface,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      ),
+                      isExpanded: true,
+                      items: SafetySettings.options.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option['id'],
+                          child: Text(
+                            option['name']!,
+                            style: TextStyle(fontSize: 14.sp),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          controller.updateSafetySetting(index, value);
+                        }
+                      },
+                    )),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
       ),
     );
   }
@@ -546,36 +607,50 @@ class AiSettingsView extends GetView<AiSettingsController> {
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Padding(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 32.w,
-                  height: 32.h,
+                  width: 40.w,
+                  height: 40.h,
                   decoration: BoxDecoration(
                     color: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
                     Iconsax.flash,
                     color: Theme.of(Get.context!).colorScheme.primary,
-                    size: 16.sp,
+                    size: 20.sp,
                   ),
                 ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Tính năng',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tính năng',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Bật/tắt các tính năng nâng cao',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 16.h),
 
             // Streaming
             Obx(() => Row(
@@ -659,36 +734,50 @@ class AiSettingsView extends GetView<AiSettingsController> {
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Padding(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 32.w,
-                  height: 32.h,
+                  width: 40.w,
+                  height: 40.h,
                   decoration: BoxDecoration(
                     color: Theme.of(Get.context!).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
                     Iconsax.language_square,
                     color: Theme.of(Get.context!).colorScheme.primary,
-                    size: 16.sp,
+                    size: 20.sp,
                   ),
                 ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Ngôn ngữ',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ngôn ngữ',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Chọn ngôn ngữ ưu tiên cho AI',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Theme.of(Get.context!).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 16.h),
             Obx(() => Column(
               children: [
                 // Vietnamese
