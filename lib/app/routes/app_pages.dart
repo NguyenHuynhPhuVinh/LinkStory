@@ -17,6 +17,7 @@ import '../modules/settings/bindings/theme_settings_binding.dart';
 import '../modules/settings/views/theme_settings_view.dart';
 import '../modules/ai/bindings/ai_binding.dart';
 import '../modules/ai/views/ai_view.dart';
+import '../modules/ai/views/chat_history_view.dart';
 import '../modules/webview/bindings/webview_binding.dart';
 import '../modules/webview/views/webview_view.dart';
 import '../modules/story_detail/bindings/story_detail_binding.dart';
@@ -73,6 +74,7 @@ class AppPages {
       binding: ThemeSettingsBinding(),
     ),
     GetPage(name: _Paths.AI, page: () => const AiView(), binding: AiBinding()),
+    GetPage(name: _Paths.AI_HISTORY, page: () => const ChatHistoryView(), binding: AiBinding()),
     GetPage(
       name: _Paths.WEBVIEW,
       page: () => const WebViewView(),

@@ -8,6 +8,8 @@ import 'app/routes/app_pages.dart';
 import 'app/data/models/website_model.dart';
 import 'app/data/models/story_model.dart';
 import 'app/data/models/reading_history_model.dart';
+import 'app/data/models/chat_message_model.dart';
+import 'app/data/models/chat_conversation_model.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/data/services/history_service.dart';
 import 'app/bindings/initial_binding.dart';
@@ -36,6 +38,22 @@ void main() async {
   }
   if (!Hive.isAdapterRegistered(4)) {
     Hive.registerAdapter(ReadingActionAdapter());
+  }
+  // Chat models adapters
+  if (!Hive.isAdapterRegistered(10)) {
+    Hive.registerAdapter(ChatMessageAdapter());
+  }
+  if (!Hive.isAdapterRegistered(11)) {
+    Hive.registerAdapter(ChatMessageRoleAdapter());
+  }
+  if (!Hive.isAdapterRegistered(12)) {
+    Hive.registerAdapter(ChatMessageStatusAdapter());
+  }
+  if (!Hive.isAdapterRegistered(13)) {
+    Hive.registerAdapter(ChatConversationAdapter());
+  }
+  if (!Hive.isAdapterRegistered(14)) {
+    Hive.registerAdapter(ConversationStatusAdapter());
   }
 
   // Initialize core services

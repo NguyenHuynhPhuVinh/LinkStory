@@ -15,6 +15,7 @@ dependencies:
   getwidget: ^6.0.0
   cached_network_image: ^3.3.1
   flutter_html: ^3.0.0-beta.2
+  flutter_markdown: ^0.7.7+1
   google_nav_bar: ^5.0.6
 
   # Icons
