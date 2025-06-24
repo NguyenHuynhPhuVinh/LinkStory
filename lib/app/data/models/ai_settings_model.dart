@@ -206,9 +206,19 @@ Hãy cùng nhau khám phá thế giới Light Novel và Anime tuyệt vời! (�
 class AiModels {
   static const List<Map<String, String>> availableModels = [
     {
+      'id': 'gemini-2.5-flash',
+      'name': 'Gemini 2.5 Flash',
+      'description': 'Mô hình mới nhất với khả năng xử lý tốt nhất',
+    },
+    {
+      'id': 'gemini-2.0-flash-lite',
+      'name': 'Gemini 2.0 Flash-Lite',
+      'description': 'Mô hình nhẹ, tốc độ cao và tiết kiệm tài nguyên',
+    },
+    {
       'id': 'gemini-2.0-flash',
       'name': 'Gemini 2.0 Flash',
-      'description': 'Mô hình mới nhất, nhanh và thông minh',
+      'description': 'Mô hình cân bằng giữa tốc độ và chất lượng',
     },
     {
       'id': 'gemini-1.5-pro',
