@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/ai_settings_model.dart';
 import '../../../data/services/ai_settings_service.dart';
+import '../../ai/controllers/ai_controller.dart';
 
 class AiSettingsController extends GetxController {
   // Services
@@ -136,6 +137,15 @@ class AiSettingsController extends GetxController {
       await _aiSettingsService.saveSettings(settings);
       currentSettings.value = settings;
 
+      // Update AI model in chat service
+      try {
+        final aiController = Get.find<AiController>();
+        await aiController.updateAiModel();
+      } catch (e) {
+        print('⚠️ Could not update AI model in chat service: $e');
+        // Don't throw error as settings were saved successfully
+      }
+
       Get.snackbar(
         'Thành công',
         'Đã lưu cài đặt AI',
@@ -166,6 +176,15 @@ class AiSettingsController extends GetxController {
       isLoading.value = true;
       await _aiSettingsService.resetToDefault();
       await loadSettings();
+
+      // Update AI model in chat service
+      try {
+        final aiController = Get.find<AiController>();
+        await aiController.updateAiModel();
+      } catch (e) {
+        print('⚠️ Could not update AI model in chat service: $e');
+        // Don't throw error as settings were reset successfully
+      }
 
       Get.snackbar(
         'Thành công',
@@ -270,6 +289,15 @@ class AiSettingsController extends GetxController {
       isLoading.value = true;
       await _aiSettingsService.importSettings(json);
       await loadSettings();
+
+      // Update AI model in chat service
+      try {
+        final aiController = Get.find<AiController>();
+        await aiController.updateAiModel();
+      } catch (e) {
+        print('⚠️ Could not update AI model in chat service: $e');
+        // Don't throw error as settings were imported successfully
+      }
 
       Get.snackbar(
         'Thành công',

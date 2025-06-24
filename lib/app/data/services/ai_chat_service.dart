@@ -2,8 +2,11 @@ import 'dart:async';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive/hive.dart';
+import 'package:get/get.dart';
 import '../models/chat_message_model.dart';
 import '../models/chat_conversation_model.dart';
+import '../models/ai_settings_model.dart';
+import 'ai_settings_service.dart';
 
 class AiChatService {
   static const String _conversationsBoxName = 'chat_conversations';
@@ -12,6 +15,9 @@ class AiChatService {
   Box<ChatConversation>? _conversationsBox;
   Box<ChatMessage>? _messagesBox;
   GenerativeModel? _model;
+
+  // AI Settings Service
+  AiSettingsService? _aiSettingsService;
 
   // Singleton pattern
   static final AiChatService _instance = AiChatService._internal();
@@ -26,44 +32,23 @@ class AiChatService {
         throw Exception('Firebase chưa được khởi tạo');
       }
 
+      // Get AI Settings Service from GetX
+      try {
+        _aiSettingsService = Get.find<AiSettingsService>();
+      } catch (e) {
+        // If not found, create and initialize a new instance
+        _aiSettingsService = AiSettingsService();
+        await _aiSettingsService!.init();
+      }
+
       // Initialize Hive boxes
       _conversationsBox = await Hive.openBox<ChatConversation>(
         _conversationsBoxName,
       );
       _messagesBox = await Hive.openBox<ChatMessage>(_messagesBoxName);
 
-      // Initialize Firebase AI model
-      _model = FirebaseAI.googleAI().generativeModel(
-        model: 'gemini-2.0-flash',
-        generationConfig: GenerationConfig(
-          temperature: 0.7,
-          topP: 0.8,
-          topK: 40,
-          maxOutputTokens: 2048,
-        ),
-        safetySettings: [
-          SafetySetting(
-            HarmCategory.harassment,
-            HarmBlockThreshold.medium,
-            null,
-          ),
-          SafetySetting(
-            HarmCategory.hateSpeech,
-            HarmBlockThreshold.medium,
-            null,
-          ),
-          SafetySetting(
-            HarmCategory.sexuallyExplicit,
-            HarmBlockThreshold.medium,
-            null,
-          ),
-          SafetySetting(
-            HarmCategory.dangerousContent,
-            HarmBlockThreshold.medium,
-            null,
-          ),
-        ],
-      );
+      // Initialize Firebase AI model with settings
+      await _initializeAiModel();
 
       print('✅ AI Chat Service initialized successfully');
     } catch (e) {
@@ -71,6 +56,68 @@ class AiChatService {
       rethrow;
     }
   }
+
+  // Initialize AI model with current settings
+  Future<void> _initializeAiModel() async {
+    final settings = _aiSettingsService!.getCurrentSettings();
+
+    _model = FirebaseAI.googleAI().generativeModel(
+      model: settings.modelName,
+      generationConfig: GenerationConfig(
+        temperature: settings.temperature,
+        topP: settings.topP,
+        topK: settings.topK,
+        maxOutputTokens: settings.maxOutputTokens,
+      ),
+      safetySettings: _buildSafetySettings(settings.safetySettings),
+      systemInstruction: Content.text(settings.systemPrompt),
+    );
+  }
+
+  // Build safety settings from string list
+  List<SafetySetting> _buildSafetySettings(List<String> safetySettings) {
+    final List<SafetySetting> settings = [];
+
+    // Map safety setting strings to actual SafetySetting objects
+    final categories = [
+      HarmCategory.harassment,
+      HarmCategory.hateSpeech,
+      HarmCategory.sexuallyExplicit,
+      HarmCategory.dangerousContent,
+    ];
+
+    for (int i = 0; i < categories.length && i < safetySettings.length; i++) {
+      final threshold = _parseHarmBlockThreshold(safetySettings[i]);
+      settings.add(SafetySetting(categories[i], threshold, null));
+    }
+
+    return settings;
+  }
+
+  // Parse harm block threshold from string
+  HarmBlockThreshold _parseHarmBlockThreshold(String threshold) {
+    switch (threshold) {
+      case 'BLOCK_NONE':
+        return HarmBlockThreshold.none;
+      case 'BLOCK_LOW_AND_ABOVE':
+        return HarmBlockThreshold.low;
+      case 'BLOCK_MEDIUM_AND_ABOVE':
+        return HarmBlockThreshold.medium;
+      case 'BLOCK_HIGH_AND_ABOVE':
+        return HarmBlockThreshold.high;
+      default:
+        return HarmBlockThreshold.medium;
+    }
+  }
+
+  // Update AI model when settings change
+  Future<void> updateAiModel() async {
+    await _initializeAiModel();
+    print('✅ AI model updated with new settings');
+  }
+
+  // Get AI Settings Service instance
+  AiSettingsService get aiSettingsService => _aiSettingsService!;
 
   // Tạo conversation mới
   Future<ChatConversation> createConversation({
@@ -80,10 +127,14 @@ class AiChatService {
   }) async {
     final conversationId = DateTime.now().millisecondsSinceEpoch.toString();
 
+    // Use system prompt from settings if not provided
+    final settings = _aiSettingsService!.getCurrentSettings();
+    final effectiveSystemPrompt = systemPrompt ?? settings.systemPrompt;
+
     final conversation = ChatConversation.create(
       id: conversationId,
       title: title,
-      systemPrompt: systemPrompt,
+      systemPrompt: effectiveSystemPrompt,
       metadata: metadata,
     );
 
@@ -179,13 +230,14 @@ class AiChatService {
       final responseText = response.text ?? '';
 
       // Tạo AI response message
+      final settings = _aiSettingsService!.getCurrentSettings();
       final aiMessageId =
           '${conversationId}_${DateTime.now().millisecondsSinceEpoch + 1}';
       final aiMessage = ChatMessage.assistant(
         id: aiMessageId,
         conversationId: conversationId,
         content: responseText,
-        isMarkdown: true,
+        isMarkdown: settings.enableMarkdown,
         status: ChatMessageStatus.sent,
       );
 
@@ -288,11 +340,12 @@ class AiChatService {
       }
 
       // Lưu complete AI message
+      final settings = _aiSettingsService!.getCurrentSettings();
       final aiMessage = ChatMessage.assistant(
         id: aiMessageId,
         conversationId: conversationId,
         content: fullResponse,
-        isMarkdown: true,
+        isMarkdown: settings.enableMarkdown,
         status: ChatMessageStatus.sent,
       );
 
@@ -367,5 +420,12 @@ class AiChatService {
   Future<void> clearAllData() async {
     await _conversationsBox?.clear();
     await _messagesBox?.clear();
+  }
+
+  // Close service
+  Future<void> close() async {
+    await _conversationsBox?.close();
+    await _messagesBox?.close();
+    // Don't close _aiSettingsService as it might be shared with other services
   }
 }

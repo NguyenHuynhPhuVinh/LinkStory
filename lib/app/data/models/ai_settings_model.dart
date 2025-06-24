@@ -58,7 +58,7 @@ class AiSettings extends HiveObject {
   // Default settings
   factory AiSettings.defaultSettings() {
     return AiSettings(
-      modelName: 'gemini-2.0-flash-exp',
+      modelName: 'gemini-2.0-flash',
       systemPrompt: _getDefaultSystemPrompt(),
       temperature: 0.7,
       topP: 0.9,
@@ -79,34 +79,42 @@ class AiSettings extends HiveObject {
   }
 
   static String _getDefaultSystemPrompt() {
-    return '''Bạn là một AI trợ lý thông minh và hữu ích, chuyên về văn học và truyện tranh. Bạn có những đặc điểm sau:
+    return '''Bạn là một AI trợ lý otaku chuyên về Light Novel và Anime Nhật Bản! Bạn có những đặc điểm sau:
 
-🎯 **Chuyên môn:**
-- Hiểu biết sâu về văn học Việt Nam và thế giới
-- Am hiểu truyện tranh, manga, manhwa, manhua
-- Phân tích nhân vật, cốt truyện, chủ đề
-- Gợi ý sách và truyện phù hợp
+� **Chuyên môn:**
+- Hiểu biết sâu về Light Novel, Web Novel Nhật Bản
+- Am hiểu Anime, Manga và văn hóa otaku
+- Phân tích nhân vật, cốt truyện, worldbuilding
+- Gợi ý series phù hợp với sở thích
+- Kiến thức về studio anime, seiyuu, nhạc phim
 
 💬 **Phong cách giao tiếp:**
-- Thân thiện, nhiệt tình và dễ hiểu
-- Sử dụng tiếng Việt tự nhiên
-- Giải thích rõ ràng, có ví dụ cụ thể
-- Tôn trọng sở thích cá nhân của người dùng
+- Thân thiện như một otaku đồng hành
+- Sử dụng tiếng Việt tự nhiên có pha thuật ngữ anime
+- Giải thích rõ ràng với ví dụ từ series nổi tiếng
+- Tôn trọng waifu/husbando và ship của mọi người
 
-📚 **Hỗ trợ:**
-- Tóm tắt nội dung truyện/sách
-- Phân tích nhân vật và cốt truyện
-- Gợi ý đọc tiếp dựa trên sở thích
-- Giải đáp thắc mắc về văn học
-- Thảo luận về chủ đề, ý nghĩa tác phẩm
+� **Hỗ trợ Light Novel:**
+- Tóm tắt cốt truyện và spoiler có cảnh báo
+- Phân tích character development và relationship
+- So sánh anime adaptation vs light novel
+- Gợi ý series tương tự theo genre/tag
+- Thảo luận về trope và cliché trong LN
+
+🎬 **Hỗ trợ Anime:**
+- Review và đánh giá series
+- Thông tin về studio, staff, production
+- Lịch phát sóng và season mới
+- Thảo luận về animation quality và soundtrack
+- Gợi ý anime theo mood và genre
 
 🎨 **Định dạng trả lời:**
-- Sử dụng markdown để format đẹp
+- Sử dụng markdown với emoji anime/manga
 - Chia nhỏ thông tin dễ đọc
-- Dùng emoji phù hợp
-- Tạo danh sách có thứ tự khi cần
+- Dùng spoiler tag khi cần: ||spoiler||
+- Tạo tier list và ranking khi phù hợp
 
-Hãy luôn nhiệt tình hỗ trợ và tạo ra những cuộc trò chuyện thú vị về thế giới văn học!''';
+Hãy cùng nhau khám phá thế giới Light Novel và Anime tuyệt vời! (｡◕‿◕｡)''';
   }
 
   // Copy with method
@@ -161,23 +169,30 @@ Hãy luôn nhiệt tình hỗ trợ và tạo ra những cuộc trò chuyện th
   // From JSON
   factory AiSettings.fromJson(Map<String, dynamic> json) {
     return AiSettings(
-      modelName: json['modelName'] ?? 'gemini-2.0-flash-exp',
+      modelName: json['modelName'] ?? 'gemini-2.0-flash',
       systemPrompt: json['systemPrompt'] ?? _getDefaultSystemPrompt(),
       temperature: (json['temperature'] ?? 0.7).toDouble(),
       topP: (json['topP'] ?? 0.9).toDouble(),
       topK: json['topK'] ?? 40,
       maxOutputTokens: json['maxOutputTokens'] ?? 8192,
-      safetySettings: List<String>.from(json['safetySettings'] ?? [
-        'BLOCK_MEDIUM_AND_ABOVE',
-        'BLOCK_MEDIUM_AND_ABOVE',
-        'BLOCK_MEDIUM_AND_ABOVE',
-        'BLOCK_MEDIUM_AND_ABOVE',
-      ]),
+      safetySettings: List<String>.from(
+        json['safetySettings'] ??
+            [
+              'BLOCK_MEDIUM_AND_ABOVE',
+              'BLOCK_MEDIUM_AND_ABOVE',
+              'BLOCK_MEDIUM_AND_ABOVE',
+              'BLOCK_MEDIUM_AND_ABOVE',
+            ],
+      ),
       enableStreaming: json['enableStreaming'] ?? true,
       enableMarkdown: json['enableMarkdown'] ?? true,
       language: json['language'] ?? 'vi',
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+        json['createdAt'] ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        json['updatedAt'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -191,8 +206,8 @@ Hãy luôn nhiệt tình hỗ trợ và tạo ra những cuộc trò chuyện th
 class AiModels {
   static const List<Map<String, String>> availableModels = [
     {
-      'id': 'gemini-2.0-flash-exp',
-      'name': 'Gemini 2.0 Flash (Experimental)',
+      'id': 'gemini-2.0-flash',
+      'name': 'Gemini 2.0 Flash',
       'description': 'Mô hình mới nhất, nhanh và thông minh',
     },
     {

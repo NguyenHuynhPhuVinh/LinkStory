@@ -324,6 +324,17 @@ class AiController extends GetxController {
     errorMessage.value = '';
   }
 
+  // Update AI model when settings change
+  Future<void> updateAiModel() async {
+    try {
+      await _aiChatService.updateAiModel();
+      print('✅ AI model updated in controller');
+    } catch (e) {
+      print('❌ Error updating AI model: $e');
+      errorMessage.value = 'Không thể cập nhật mô hình AI: $e';
+    }
+  }
+
   // Search conversations
   void searchConversations(String query) {
     searchQuery.value = query;
